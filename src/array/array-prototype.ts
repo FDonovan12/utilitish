@@ -70,6 +70,28 @@ declare global {
         enumerate(): [T, number][];
 
         /**
+         * Returns a sorted copy of the array in ascending order.
+         * - If no callback is provided, all elements must be of type `number` or `string`.
+         * - If a callback is provided, it must return a `number` or `string` for each element.
+         * @param callback Optional function to extract the value to sort by.
+         * @throws {TypeError} If elements are not sortable or the callback returns an invalid type.
+         * @returns A new array sorted in ascending order.
+         */
+        sortAsc(this: number[] | string[]): T[];
+        sortAsc(this: T[], callback: (item: T) => number | string): T[];
+
+        /**
+         * Returns a sorted copy of the array in descending order.
+         * - If no callback is provided, all elements must be of type `number` or `string`.
+         * - If a callback is provided, it must return a `number` or `string` for each element.
+         * @param callback Optional function to extract the value to sort by.
+         * @throws {TypeError} If elements are not sortable or the callback returns an invalid type.
+         * @returns A new array sorted in descending order.
+         */
+        sortDesc(this: number[] | string[]): T[];
+        sortDesc(this: T[], callback: (item: T) => number | string): T[];
+
+        /**
          * Swaps the values at two indices in the array.
          * @param i First index
          * @param j Second index
@@ -87,9 +109,7 @@ defineIfNotExists(Array.prototype, 'last', function <T>(this: T[]): T | undefine
     return this[this.length - 1];
 });
 
-defineIfNotExists(Array.prototype, 'sum', function <
-    T
->(this: T[], callback?: (item: T) => number): number {
+defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], callback?: (item: T) => number): number {
     if (typeof callback === 'function') {
         return this.reduce((acc: number, item: T) => acc + callback(item), 0);
     }
@@ -114,24 +134,21 @@ defineIfNotExists(Array.prototype, 'chunk', function <T>(this: T[], size: number
     return result;
 });
 
-defineIfNotExists(Array.prototype, 'average', function <
-    T
->(this: T[], callback?: (item: T) => number): number {
+defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], callback?: (item: T) => number): number {
     if (this.length === 0) return 0;
     if (typeof callback === 'function') {
         return this.reduce((acc: number, item: T) => acc + callback(item), 0) / this.length;
     }
     if (this.every((item) => typeof item === 'number')) {
-        return (
-            (this as number[]).reduce((acc: number, item: number) => acc + item, 0) / this.length
-        );
+        return (this as number[]).reduce((acc: number, item: number) => acc + item, 0) / this.length;
     }
     throw new Error('Array.prototype.average() requires a callback unless array is number[]');
 });
 
-defineIfNotExists(Array.prototype, 'groupBy', function <
-    T
->(this: T[], callback: (item: T) => string | number): Record<string | number, T[]> {
+defineIfNotExists(Array.prototype, 'groupBy', function <T>(this: T[], callback: (item: T) => string | number): Record<
+    string | number,
+    T[]
+> {
     if (typeof callback !== 'function') {
         throw new TypeError('Callback must be a function');
     }
@@ -155,13 +172,67 @@ defineIfNotExists(Array.prototype, 'enumerate', function <T>(this: T[]): [T, num
     return this.map((value, index) => [value, index]);
 });
 
+defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], callback?: (item: T) => number | string): T[] {
+    const arr = this.slice();
+    if (arr.length === 0) return arr;
+
+    if (callback && typeof callback !== 'function') {
+        throw new TypeError('Callback must be a function');
+    }
+
+    // Si pas de callback, vérifier que tous les éléments sont number ou string
+    if (!callback && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
+        throw new TypeError('Array elements must be number or string if no callback is provided');
+    }
+
+    return arr.sort((a, b) => {
+        const valA = callback ? callback(a) : (a as unknown as number | string);
+        const valB = callback ? callback(b) : (b as unknown as number | string);
+
+        if (
+            (typeof valA !== 'number' && typeof valA !== 'string') ||
+            (typeof valB !== 'number' && typeof valB !== 'string')
+        ) {
+            throw new TypeError('Callback must return number or string');
+        }
+
+        if (valA < valB) return -1;
+        if (valA > valB) return 1;
+        return 0;
+    });
+});
+
+defineIfNotExists(Array.prototype, 'sortDesc', function <T>(this: T[], callback?: (item: T) => number | string): T[] {
+    const arr = this.slice();
+    if (arr.length === 0) return arr;
+
+    if (callback && typeof callback !== 'function') {
+        throw new TypeError('Callback must be a function');
+    }
+
+    if (!callback && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
+        throw new TypeError('Array elements must be number or string if no callback is provided');
+    }
+
+    return arr.sort((a, b) => {
+        const valA = callback ? callback(a) : (a as unknown as number | string);
+        const valB = callback ? callback(b) : (b as unknown as number | string);
+
+        if (
+            (typeof valA !== 'number' && typeof valA !== 'string') ||
+            (typeof valB !== 'number' && typeof valB !== 'string')
+        ) {
+            throw new TypeError('Callback must return number or string');
+        }
+
+        if (valA > valB) return -1;
+        if (valA < valB) return 1;
+        return 0;
+    });
+});
+
 defineIfNotExists(Array.prototype, 'swap', function <T>(this: T[], i: number, j: number): T[] {
-    if (
-        typeof i !== 'number' ||
-        typeof j !== 'number' ||
-        !Number.isInteger(i) ||
-        !Number.isInteger(j)
-    ) {
+    if (typeof i !== 'number' || typeof j !== 'number' || !Number.isInteger(i) || !Number.isInteger(j)) {
         throw new TypeError('Indices must be integers');
     }
     if (i < 0 || i >= this.length || j < 0 || j >= this.length) {

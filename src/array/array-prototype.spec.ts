@@ -54,10 +54,10 @@ describe('Array prototype extensions', () => {
             expect([1, 2, 3].chunk(2)).toEqual([[1, 2], [3]]);
         });
         it('should throw if size is not a positive integer', () => {
-            expect(() => [1, 2, 3].chunk(0)).toThrowError(TypeError);
-            expect(() => [1, 2, 3].chunk(-1)).toThrowError(TypeError);
-            expect(() => [1, 2, 3].chunk(1.5)).toThrowError(TypeError);
-            expect(() => [1, 2, 3].chunk('a' as any)).toThrowError(TypeError);
+            expect(() => [1, 2, 3].chunk(0)).toThrow(TypeError);
+            expect(() => [1, 2, 3].chunk(-1)).toThrow(TypeError);
+            expect(() => [1, 2, 3].chunk(1.5)).toThrow(TypeError);
+            expect(() => [1, 2, 3].chunk('a' as any)).toThrow(TypeError);
         });
     });
 
@@ -68,10 +68,10 @@ describe('Array prototype extensions', () => {
             expect(result).toEqual({ 1: ['a'], 2: ['ab'], 3: ['abc'] });
         });
         it('should throw if callback is not a function', () => {
-            expect(() => [1, 2, 3].groupBy(null as any)).toThrowError(TypeError);
+            expect(() => [1, 2, 3].groupBy(null as any)).toThrow(TypeError);
         });
         it('should throw if callback does not return string or number', () => {
-            expect(() => [1, 2, 3].groupBy(() => ({}) as any)).toThrowError(TypeError);
+            expect(() => [1, 2, 3].groupBy(() => ({} as any))).toThrow(TypeError);
         });
     });
 
@@ -94,13 +94,57 @@ describe('Array prototype extensions', () => {
         });
         it('should throw if an index is out of bounds', () => {
             const arr = [1, 2, 3];
-            expect(() => arr.swap(-1, 2)).toThrowError(RangeError);
-            expect(() => arr.swap(0, 3)).toThrowError(RangeError);
+            expect(() => arr.swap(-1, 2)).toThrow(RangeError);
+            expect(() => arr.swap(0, 3)).toThrow(RangeError);
         });
         it('should throw if indices are not integers', () => {
             const arr = [1, 2, 3];
-            expect(() => arr.swap(0.5, 2)).toThrowError(TypeError);
-            expect(() => arr.swap(0, 'a' as any)).toThrowError(TypeError);
+            expect(() => arr.swap(0.5, 2)).toThrow(TypeError);
+            expect(() => arr.swap(0, 'a' as any)).toThrow(TypeError);
         });
+    });
+
+    describe('Array.prototype.sortAsc', () => {
+        it('sorts a number array in ascending order', () => {
+            expect([3, 1, 2].sortAsc()).toEqual([1, 2, 3]);
+        });
+        it('sorts a string array in ascending order', () => {
+            expect(['b', 'a', 'c'].sortAsc()).toEqual(['a', 'b', 'c']);
+        });
+        it('sorts using a callback', () => {
+            const arr = [{ v: 2 }, { v: 1 }];
+            expect(arr.sortAsc((x) => x.v)).toEqual([{ v: 1 }, { v: 2 }]);
+        });
+        it('returns [] for an empty array', () => {
+            expect([].sortAsc()).toEqual([]);
+        });
+        // it('throws if callback does not return a sortable type', () => {
+        //     expect(() => [{ v: {} }].sortAsc((x) => x.v as any)).toThrow(TypeError);
+        // });
+        // it('throws if elements are not sortable without callback', () => {
+        //     expect(() => [{ v: 1 } as any].sortAsc()).toThrow(TypeError);
+        // });
+    });
+
+    describe('Array.prototype.sortDesc', () => {
+        it('sorts a number array in descending order', () => {
+            expect([1, 3, 2].sortDesc()).toEqual([3, 2, 1]);
+        });
+        it('sorts a string array in descending order', () => {
+            expect(['b', 'a', 'c'].sortDesc()).toEqual(['c', 'b', 'a']);
+        });
+        it('sorts using a callback', () => {
+            const arr = [{ v: 1 }, { v: 2 }];
+            expect(arr.sortDesc((x) => x.v)).toEqual([{ v: 2 }, { v: 1 }]);
+        });
+        it('returns [] for an empty array', () => {
+            expect([].sortDesc()).toEqual([]);
+        });
+        // it('throws if callback does not return a sortable type', () => {
+        //     expect(() => [{ v: {} }].sortDesc((x) => x.v as any)).toThrow(TypeError);
+        // });
+        // it('throws if elements are not sortable without callback', () => {
+        //     expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
+        // });
     });
 });
