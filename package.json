@@ -1,0 +1,27 @@
+{
+  "name": "utilitish",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": [
+    "typescript",
+    "prototype",
+    "utils"
+  ],
+  "author": "Donovan Ferreira <donovanferreira12@gmail.com> (https://github.com/FDonovan12)",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4",
+    "typescript": "^5.8.3"
+  }
+}
