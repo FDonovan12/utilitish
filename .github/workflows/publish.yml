@@ -3,7 +3,7 @@ name: Publish Package
 on:
   push:
     tags:
-      - 'v*.*.*' # déclenche uniquement sur un tag version type v1.2.3
+      - 'v*.*.*'
     branches:
       - main
 
@@ -25,6 +25,9 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Build package
+        run: npm run build
 
       - name: Publish to npm
         run: npm publish
