@@ -98,6 +98,13 @@ declare global {
          * @returns The array itself after swapping
          */
         swap(i: number, j: number): this;
+
+        /**
+         * Returns a new array with the elements shuffled in random order.
+         * Uses the Fisher-Yates shuffle algorithm.
+         * @returns A new shuffled array.
+         */
+        shuffle(): T[];
     }
 }
 
@@ -244,4 +251,13 @@ defineIfNotExists(Array.prototype, 'swap', function <T>(this: T[], i: number, j:
         this[j] = temp;
     }
     return this;
+});
+
+defineIfNotExists(Array.prototype, 'shuffle', function <T>(this: T[]): T[] {
+    const arr = this.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 });

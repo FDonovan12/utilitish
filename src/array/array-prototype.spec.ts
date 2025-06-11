@@ -128,7 +128,7 @@ describe('Array prototype extensions', () => {
 
     describe('Array.prototype.sortDesc', () => {
         it('sorts a number array in descending order', () => {
-            expect([1, 3, 2].sortDesc()).toEqual([3, 2, 1]);
+            expect([1, 3, 2, 4].sortDesc()).toEqual([4, 3, 2, 1]);
         });
         it('sorts a string array in descending order', () => {
             expect(['b', 'a', 'c'].sortDesc()).toEqual(['c', 'b', 'a']);
@@ -146,5 +146,32 @@ describe('Array prototype extensions', () => {
         // it('throws if elements are not sortable without callback', () => {
         //     expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
         // });
+    });
+
+    describe('Array.prototype.shuffle', () => {
+        it('returns a new array with the same elements in any order', () => {
+            const arr = [1, 2, 3, 4, 5];
+            const shuffled = arr.shuffle();
+            expect(shuffled).toHaveLength(arr.length);
+            expect(shuffled.sort()).toEqual(arr.sort());
+            // Not a strict test for randomness, but should not always be equal
+        });
+
+        it('does not mutate the original array', () => {
+            const arr = [1, 2, 3];
+            const copy = arr.slice();
+            arr.shuffle();
+            expect(arr).toEqual(copy);
+        });
+
+        it('returns an empty array when called on an empty array', () => {
+            expect([].shuffle()).toEqual([]);
+        });
+
+        it('returns a new array instance', () => {
+            const arr = [1, 2, 3];
+            const shuffled = arr.shuffle();
+            expect(shuffled).not.toBe(arr);
+        });
     });
 });
