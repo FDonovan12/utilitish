@@ -105,6 +105,20 @@ declare global {
          * @returns A new shuffled array.
          */
         shuffle(): T[];
+
+        /**
+         * Converts an array to a Map.
+         * - If the array is of pairs [K, V], returns Map<K, V>.
+         * - If a key is provided, returns Map<T[K], T>.
+         * - If keySelector and valueSelector are provided, returns Map<K, V>.
+         * @param keyOrKeySelector Key name or key selector function.
+         * @param valueSelector Value selector function.
+         */
+        toMap<K, V>(this: [K, V][]): Map<K, V>;
+        toMap<K extends keyof T>(this: T[], key: K): Map<T[K], T>;
+        toMap<K, V>(): Map<number, T>;
+        toMap<K, V>(this: T[], keySelector: (item: T) => K): Map<K, T>;
+        toMap<K, V>(this: T[], keySelector: (item: T) => K, valueSelector: (item: T) => V): Map<K, V>;
     }
 }
 
@@ -260,4 +274,35 @@ defineIfNotExists(Array.prototype, 'shuffle', function <T>(this: T[]): T[] {
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
+});
+
+defineIfNotExists(Array.prototype, 'toMap', function <
+    T,
+    K,
+    V,
+>(this: T[] | [K, V][], keyOrKeySelector?: keyof T | ((item: T) => K), valueSelector?: (item: T) => V): Map<
+    number | K,
+    V | T
+> {
+    if (this.length && Array.isArray(this[0]) && (this[0] as any).length === 2) {
+        return new Map(this as [K, V][]);
+    }
+
+    const map = new Map<number | K, V | T>();
+
+    for (let index = 0; index < this.length; index++) {
+        const item = this[index] as T;
+        let key: K | number = index;
+        let value: V | T = valueSelector ? valueSelector(item) : item;
+        if (typeof keyOrKeySelector === 'function') {
+            key = (keyOrKeySelector as (item: T) => K)(item);
+        } else if (typeof keyOrKeySelector === 'string') {
+            key = item[keyOrKeySelector] as K;
+        } else if (keyOrKeySelector) {
+            throw new Error('Invalid arguments keyOrKeySelector passed to toMap');
+        }
+        map.set(key, value);
+    }
+
+    return map;
 });

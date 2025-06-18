@@ -174,4 +174,76 @@ describe('Array prototype extensions', () => {
             expect(shuffled).not.toBe(arr);
         });
     });
+
+    describe('Array.prototype.toMap', () => {
+        it('converts array of pairs to Map', () => {
+            const arr: [string, number][] = [
+                ['a', 1],
+                ['b', 2],
+            ];
+            const map = arr.toMap();
+            expect(map instanceof Map).toBe(true);
+            expect(map.size).toBe(2);
+            expect(map.get('a')).toBe(1);
+            expect(map.get('b')).toBe(2);
+        });
+
+        it('converts array of objects to Map using key string', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const map = arr.toMap('id');
+            expect(map instanceof Map).toBe(true);
+            expect(map.size).toBe(2);
+            expect(map.get(1)).toEqual({ id: 1, name: 'foo' });
+            expect(map.get(2)).toEqual({ id: 2, name: 'bar' });
+        });
+
+        it('converts array of objects to Map using key and value selectors', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const map = arr.toMap(
+                (x) => x.id,
+                (x) => x.name,
+            );
+            expect(map instanceof Map).toBe(true);
+            expect(map.size).toBe(2);
+            expect(map.get(1)).toBe('foo');
+            expect(map.get(2)).toBe('bar');
+        });
+
+        it('converts array of objects to Map using key without value selectors', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const map = arr.toMap((x) => x.id);
+
+            expect(map instanceof Map).toBe(true);
+            expect(map.size).toBe(2);
+            expect(map.get(1)).toEqual({ id: 1, name: 'foo' });
+            expect(map.get(2)).toEqual({ id: 2, name: 'bar' });
+        });
+
+        it('converts array of objects to Map using no callback', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const map = arr.toMap();
+
+            expect(map instanceof Map).toBe(true);
+            expect(map.size).toBe(2);
+            expect(map.get(0)).toEqual({ id: 1, name: 'foo' });
+            expect(map.get(1)).toEqual({ id: 2, name: 'bar' });
+        });
+
+        it('throws if arguments are invalid', () => {
+            // expect(() => [{ id: 1 }].toMap()).toThrow(Error);
+            expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+        });
+    });
 });
