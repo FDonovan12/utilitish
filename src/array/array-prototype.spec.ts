@@ -115,15 +115,19 @@ describe('Array prototype extensions', () => {
             const arr = [{ v: 2 }, { v: 1 }];
             expect(arr.sortAsc((x) => x.v)).toEqual([{ v: 1 }, { v: 2 }]);
         });
+        it('sorts using a callback', () => {
+            const arr = [{ v: 2 }, { v: 1 }];
+            expect(arr.sortAsc('v')).toEqual([{ v: 1 }, { v: 2 }]);
+        });
         it('returns [] for an empty array', () => {
             expect([].sortAsc()).toEqual([]);
         });
         // it('throws if callback does not return a sortable type', () => {
         //     expect(() => [{ v: {} }].sortAsc((x) => x.v as any)).toThrow(TypeError);
         // });
-        // it('throws if elements are not sortable without callback', () => {
-        //     expect(() => [{ v: 1 } as any].sortAsc()).toThrow(TypeError);
-        // });
+        it('throws if elements are not sortable without callback', () => {
+            expect(() => [{ v: 1 } as any].sortAsc()).toThrow(TypeError);
+        });
     });
 
     describe('Array.prototype.sortDesc', () => {
@@ -137,15 +141,19 @@ describe('Array prototype extensions', () => {
             const arr = [{ v: 1 }, { v: 2 }];
             expect(arr.sortDesc((x) => x.v)).toEqual([{ v: 2 }, { v: 1 }]);
         });
+        it('sorts using a callback', () => {
+            const arr = [{ v: 1 }, { v: 2 }];
+            expect(arr.sortDesc('v')).toEqual([{ v: 2 }, { v: 1 }]);
+        });
         it('returns [] for an empty array', () => {
             expect([].sortDesc()).toEqual([]);
         });
         // it('throws if callback does not return a sortable type', () => {
         //     expect(() => [{ v: {} }].sortDesc((x) => x.v as any)).toThrow(TypeError);
         // });
-        // it('throws if elements are not sortable without callback', () => {
-        //     expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
-        // });
+        it('throws if elements are not sortable without callback', () => {
+            expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
+        });
     });
 
     describe('Array.prototype.shuffle', () => {

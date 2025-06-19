@@ -1,4 +1,4 @@
-import { defineIfNotExists } from '../utils';
+import { defineIfNotExists, resolveSelector } from '../utils';
 
 export {};
 
@@ -78,6 +78,7 @@ declare global {
          * @returns A new array sorted in ascending order.
          */
         sortAsc(this: number[] | string[]): T[];
+        sortAsc<K extends keyof T>(this: T[], key: K): T[];
         sortAsc(this: T[], callback: (item: T) => number | string): T[];
 
         /**
@@ -89,6 +90,7 @@ declare global {
          * @returns A new array sorted in descending order.
          */
         sortDesc(this: number[] | string[]): T[];
+        sortDesc<K extends keyof T>(this: T[], key: K): T[];
         sortDesc(this: T[], callback: (item: T) => number | string): T[];
 
         /**
@@ -117,8 +119,8 @@ declare global {
         toMap<K, V>(this: [K, V][]): Map<K, V>;
         toMap<K extends keyof T>(this: T[], key: K): Map<T[K], T>;
         toMap<K, V>(): Map<number, T>;
-        toMap<K, V>(this: T[], keySelector: (item: T) => K): Map<K, T>;
-        toMap<K, V>(this: T[], keySelector: (item: T) => K, valueSelector: (item: T) => V): Map<K, V>;
+        toMap<K, V>(this: T[], keyCallback: (item: T) => K): Map<K, T>;
+        toMap<K, V>(this: T[], keyCallback: (item: T) => K, valueCallback: (item: T) => V): Map<K, V>;
 
         /**
          * Returns a Set containing the unique elements of the array.
@@ -214,22 +216,19 @@ defineIfNotExists(Array.prototype, 'enumerate', function <T>(this: T[]): [T, num
     return this.map((value, index) => [value, index]);
 });
 
-defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], callback?: (item: T) => number | string): T[] {
+defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?: (item: T) => number | string): T[] {
     const arr = this.slice();
     if (arr.length === 0) return arr;
 
-    if (callback && typeof callback !== 'function') {
-        throw new TypeError('Callback must be a function');
-    }
+    const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
 
-    // Si pas de callback, vérifier que tous les éléments sont number ou string
-    if (!callback && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
-        throw new TypeError('Array elements must be number or string if no callback is provided');
+    if (!selector && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
+        throw new TypeError('Array elements must be number or string if no selector is provided');
     }
 
     return arr.sort((a, b) => {
-        const valA = callback ? callback(a) : (a as unknown as number | string);
-        const valB = callback ? callback(b) : (b as unknown as number | string);
+        const valA = getValue(a);
+        const valB = getValue(b);
 
         if (
             (typeof valA !== 'number' && typeof valA !== 'string') ||
@@ -238,33 +237,33 @@ defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], callback?:
             throw new TypeError('Callback must return number or string');
         }
 
-        if (valA < valB) return -1;
         if (valA > valB) return 1;
+        if (valA < valB) return -1;
         return 0;
     });
 });
 
-defineIfNotExists(Array.prototype, 'sortDesc', function <T>(this: T[], callback?: (item: T) => number | string): T[] {
+defineIfNotExists(Array.prototype, 'sortDesc', function <
+    T,
+>(this: T[], selector?: keyof T | ((item: T) => number | string)): T[] {
     const arr = this.slice();
     if (arr.length === 0) return arr;
 
-    if (callback && typeof callback !== 'function') {
-        throw new TypeError('Callback must be a function');
-    }
+    const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
 
-    if (!callback && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
-        throw new TypeError('Array elements must be number or string if no callback is provided');
+    if (!selector && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
+        throw new TypeError('Array elements must be number or string if no selector is provided');
     }
 
     return arr.sort((a, b) => {
-        const valA = callback ? callback(a) : (a as unknown as number | string);
-        const valB = callback ? callback(b) : (b as unknown as number | string);
+        const valA = getValue(a);
+        const valB = getValue(b);
 
         if (
             (typeof valA !== 'number' && typeof valA !== 'string') ||
             (typeof valB !== 'number' && typeof valB !== 'string')
         ) {
-            throw new TypeError('Callback must return number or string');
+            throw new TypeError('Selector must return number or string');
         }
 
         if (valA > valB) return -1;
@@ -301,63 +300,43 @@ defineIfNotExists(Array.prototype, 'toMap', function <
     T,
     K,
     V,
->(this: T[] | [K, V][], keyOrKeySelector?: keyof T | ((item: T) => K), valueSelector?: (item: T) => V): Map<
+>(this: T[] | [K, V][], keySelector?: keyof T | ((item: T) => K), valueSelector?: keyof T | ((item: T) => V)): Map<
     number | K,
     V | T
 > {
-    if (this.length && Array.isArray(this[0]) && (this[0] as any).length === 2) {
+    if (this.length && Array.isArray(this[0]) && this[0].length === 2) {
         return new Map(this as [K, V][]);
     }
 
     const map = new Map<number | K, V | T>();
 
-    for (let index = 0; index < this.length; index++) {
-        const item = this[index] as T;
-        let key: K | number = index;
-        let value: V | T = valueSelector ? valueSelector(item) : item;
-        if (typeof keyOrKeySelector === 'function') {
-            key = (keyOrKeySelector as (item: T) => K)(item);
-        } else if (typeof keyOrKeySelector === 'string') {
-            key = item[keyOrKeySelector] as K;
-        } else if (keyOrKeySelector) {
-            throw new Error('Invalid arguments keyOrKeySelector passed to toMap');
-        }
+    const getKey = resolveSelector(keySelector, (_: T, index?: number) => index as number | K);
+    const getValue = resolveSelector(valueSelector, (item: T) => item as V | T);
+
+    for (let i = 0; i < this.length; i++) {
+        const item = this[i] as T;
+        const key = getKey(item, i);
+        const value = getValue(item);
         map.set(key, value);
     }
-
     return map;
 });
 
 defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: ((item: T) => K) | keyof T): Set<
     T | K
 > {
-    if (selector && typeof selector !== 'function' && typeof selector !== 'string') {
-        throw new TypeError('toSet: selector must be a function or a string key');
-    }
-    if (typeof selector === 'function') {
-        return new Set(this.map(selector));
-    } else if (typeof selector === 'string') {
-        return new Set(this.map((item) => (item as any)[selector]));
-    }
-    return new Set(this);
+    const getValue = resolveSelector(selector, (item: T) => item as K | T);
+    return new Set(this.map(getValue));
 });
 
 defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selector?: ((item: T) => K) | keyof T): Map<
     K | T,
     number
 > {
-    if (selector && typeof selector !== 'function' && typeof selector !== 'string') {
-        throw new TypeError('countBy: selector must be a function or a string key');
-    }
+    const getKey = resolveSelector(selector, (item: T) => item as K | T);
     const map = new Map<K | T, number>();
     for (const item of this) {
-        let key: K | T = item;
-        if (typeof selector === 'string') {
-            key = item[selector] as K;
-        } else if (typeof selector === 'function') {
-            key = selector(item);
-        }
-
+        const key = getKey(item);
         map.set(key, (map.get(key) ?? 0) + 1);
     }
     return map;
