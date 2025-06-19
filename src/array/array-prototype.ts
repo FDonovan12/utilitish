@@ -119,6 +119,27 @@ declare global {
         toMap<K, V>(): Map<number, T>;
         toMap<K, V>(this: T[], keySelector: (item: T) => K): Map<K, T>;
         toMap<K, V>(this: T[], keySelector: (item: T) => K, valueSelector: (item: T) => V): Map<K, V>;
+
+        /**
+         * Returns a Set containing the unique elements of the array.
+         * If a selector is provided, it can be a function or a string key.
+         * - If a function, it is called for each element.
+         * - If a string, it is used as a property key of each element.
+         * @param selector Optional function or string key to select the value to store in the Set.
+         * @returns A Set of unique elements or selected values.
+         */
+        toSet(): Set<T>;
+        toSet<K extends keyof T>(this: T[], key: K): Set<T[K]>;
+        toSet<K>(this: T[], selector: (item: T) => K): Set<K>;
+
+        /**
+         * Returns a Map where the keys are the result of the selector (function or string key) and the values are the counts of each key.
+         * @param selector Function or string key to select the key for counting.
+         * @returns A Map with the count of each key.
+         */
+        countBy(): Map<T, number>;
+        countBy<K extends keyof T>(this: T[], key: K): Set<T[K]>;
+        countBy<K>(this: T[], selector: (item: T) => K): Set<K>;
     }
 }
 
@@ -304,5 +325,40 @@ defineIfNotExists(Array.prototype, 'toMap', function <
         map.set(key, value);
     }
 
+    return map;
+});
+
+defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: ((item: T) => K) | keyof T): Set<
+    T | K
+> {
+    if (selector && typeof selector !== 'function' && typeof selector !== 'string') {
+        throw new TypeError('toSet: selector must be a function or a string key');
+    }
+    if (typeof selector === 'function') {
+        return new Set(this.map(selector));
+    } else if (typeof selector === 'string') {
+        return new Set(this.map((item) => (item as any)[selector]));
+    }
+    return new Set(this);
+});
+
+defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selector?: ((item: T) => K) | keyof T): Map<
+    K | T,
+    number
+> {
+    if (selector && typeof selector !== 'function' && typeof selector !== 'string') {
+        throw new TypeError('countBy: selector must be a function or a string key');
+    }
+    const map = new Map<K | T, number>();
+    for (const item of this) {
+        let key: K | T = item;
+        if (typeof selector === 'string') {
+            key = item[selector] as K;
+        } else if (typeof selector === 'function') {
+            key = selector(item);
+        }
+
+        map.set(key, (map.get(key) ?? 0) + 1);
+    }
     return map;
 });

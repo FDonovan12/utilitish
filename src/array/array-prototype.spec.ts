@@ -246,4 +246,78 @@ describe('Array prototype extensions', () => {
             expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
         });
     });
+
+    describe('Array.prototype.toSet', () => {
+        it('returns a Set of unique elements', () => {
+            expect([1, 2, 2, 3].toSet()).toEqual(new Set([1, 2, 3]));
+        });
+        it('returns a Set of selected values', () => {
+            const arr = [{ id: 1 }, { id: 2 }, { id: 1 }];
+            expect(arr.toSet((x) => x.id)).toEqual(new Set([1, 2]));
+        });
+        it('returns a Set of key values', () => {
+            const arr = [{ id: 1 }, { id: 2 }, { id: 1 }];
+            expect(arr.toSet('id')).toEqual(new Set([1, 2]));
+        });
+        it('returns an empty Set for an empty array', () => {
+            expect([].toSet()).toEqual(new Set());
+        });
+    });
+
+    describe('Array.prototype.countBy', () => {
+        it('counts elements by selector', () => {
+            const arr = ['a', 'b', 'a', 'c', 'b', 'a'];
+            expect(arr.countBy((x) => x)).toEqual(
+                new Map([
+                    ['a', 3],
+                    ['b', 2],
+                    ['c', 1],
+                ]),
+            );
+        });
+        it('counts elements whithout selector', () => {
+            const arr = ['a', 'b', 'a', 'c', 'b', 'a'];
+            expect(arr.countBy()).toEqual(
+                new Map([
+                    ['a', 3],
+                    ['b', 2],
+                    ['c', 1],
+                ]),
+            );
+        });
+        it('counts objects by property', () => {
+            const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
+            expect(arr.countBy((x) => x.type)).toEqual(
+                new Map([
+                    ['x', 2],
+                    ['y', 1],
+                ]),
+            );
+        });
+        it('counts objects by property using a string key', () => {
+            const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
+            expect(arr.countBy('type')).toEqual(
+                new Map([
+                    ['x', 2],
+                    ['y', 1],
+                ]),
+            );
+        });
+        it('counts objects by property', () => {
+            const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
+            expect(arr.countBy()).toEqual(
+                new Map([
+                    [{ type: 'y' }, 1],
+                    [{ type: 'x' }, 1],
+                    [{ type: 'x' }, 1],
+                ]),
+            );
+        });
+        it('returns an empty Map for an empty array', () => {
+            expect([].countBy((x) => x)).toEqual(new Map());
+        });
+        it('throws if arguments are invalid', () => {
+            expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+        });
+    });
 });
