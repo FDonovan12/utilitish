@@ -23,7 +23,17 @@ describe('Array prototype extensions', () => {
             const items = [{ x: 1 }, { x: 2 }];
             expect(items.sum((item) => item.x)).toBe(3);
         });
-        // Ajoute ici les tests d’erreur si besoin
+        it('should work with callback', () => {
+            const items = [{ x: 1 }, { x: 2 }];
+            expect(items.sum('x')).toBe(3);
+        });
+        it('should throw without callback', () => {
+            const items = [{ x: 2 }, { x: 4 }] as any;
+            expect(() => items.sum()).toThrow(TypeError);
+        });
+        it('should return 0 for empty array', () => {
+            expect([].sum()).toBe(0);
+        });
     });
 
     describe('average', () => {
@@ -33,6 +43,14 @@ describe('Array prototype extensions', () => {
         it('should work with callback', () => {
             const items = [{ x: 2 }, { x: 4 }];
             expect(items.average((item) => item.x)).toBe(3);
+        });
+        it('should work with key', () => {
+            const items = [{ x: 2 }, { x: 4 }];
+            expect(items.average('x')).toBe(3);
+        });
+        it('should throw without callback', () => {
+            const items = [{ x: 2 }, { x: 4 }] as any;
+            expect(() => items.average()).toThrow(TypeError);
         });
         it('should return 0 for empty array', () => {
             expect([].average()).toBe(0);
@@ -66,6 +84,11 @@ describe('Array prototype extensions', () => {
             const items = ['a', 'ab', 'abc'];
             const result = items.groupBy((item) => item.length);
             expect(result).toEqual({ 1: ['a'], 2: ['ab'], 3: ['abc'] });
+        });
+        it('should group items by key', () => {
+            const items = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
+            const result = items.groupBy('type');
+            expect(result).toEqual({ x: [{ type: 'x' }, { type: 'x' }], y: [{ type: 'y' }] });
         });
         it('should throw if callback is not a function', () => {
             expect(() => [1, 2, 3].groupBy(null as any)).toThrow(TypeError);
@@ -115,7 +138,7 @@ describe('Array prototype extensions', () => {
             const arr = [{ v: 2 }, { v: 1 }];
             expect(arr.sortAsc((x) => x.v)).toEqual([{ v: 1 }, { v: 2 }]);
         });
-        it('sorts using a callback', () => {
+        it('sorts using a key', () => {
             const arr = [{ v: 2 }, { v: 1 }];
             expect(arr.sortAsc('v')).toEqual([{ v: 1 }, { v: 2 }]);
         });
@@ -141,7 +164,7 @@ describe('Array prototype extensions', () => {
             const arr = [{ v: 1 }, { v: 2 }];
             expect(arr.sortDesc((x) => x.v)).toEqual([{ v: 2 }, { v: 1 }]);
         });
-        it('sorts using a callback', () => {
+        it('sorts using a key', () => {
             const arr = [{ v: 1 }, { v: 2 }];
             expect(arr.sortDesc('v')).toEqual([{ v: 2 }, { v: 1 }]);
         });

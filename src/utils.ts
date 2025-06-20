@@ -30,17 +30,26 @@ export function resolveSelector<T, R>(
     }
 
     if (fallback) {
-        return fallback;
+        if (typeof fallback === 'function') {
+            return fallback;
+        }
+        throw new TypeError(`fallback must be a function`);
     }
-    throw new TypeError(`${name} must be a function or a string key`);
+    throw new TypeError(`fallback must be given if no selector`);
 }
 
 export function assertValidSelector<T, R>(
     selector: any,
     name: string = 'selector',
-): asserts selector is keyof T | ((item: T) => R) {
+): asserts selector is Selector<T, R> {
     const isValid = typeof selector === 'function' || typeof selector === 'string';
     if (selector !== undefined && !isValid) {
         throw new TypeError(`${name} must be a function or a string key`);
     }
 }
+
+export function isNumberOrString(value: unknown): value is string | number {
+    return value === 'string' || typeof value === 'number';
+}
+
+export type Selector<T, K> = keyof T | ((item: T) => K);

@@ -1,4 +1,4 @@
-import { defineIfNotExists, resolveSelector } from '../utils';
+import { defineIfNotExists, resolveSelector, Selector } from '../utils';
 
 export {};
 
@@ -24,6 +24,7 @@ declare global {
          * @returns The sum of the values.
          */
         sum(this: number[]): number;
+        sum<K extends keyof T>(this: T[], key: K): number;
         sum(this: T[], callback: (item: T) => number): number;
 
         /**
@@ -47,6 +48,7 @@ declare global {
          * @returns The average of the values.
          */
         average(this: number[]): number;
+        average<K extends keyof T>(this: T[], key: K): number;
         average(this: T[], callback: (item: T) => number): number;
 
         /**
@@ -54,7 +56,8 @@ declare global {
          * @param callback - Function that returns a key to group by.
          * @returns An object where keys are the group names and values are arrays of grouped items.
          */
-        groupBy(callback: (item: T) => string | number): Record<string | number, T[]>;
+        groupBy(this: T[], callback: (item: T) => string | number): Record<string | number, T[]>;
+        groupBy<K extends keyof T>(this: T[], key: K): Record<string | number, T[]>;
 
         /**
          * Removes all falsy values (`false`, `null`, `0`, `""`, `undefined`, and `NaN`) from the array.
@@ -140,8 +143,8 @@ declare global {
          * @returns A Map with the count of each key.
          */
         countBy(): Map<T, number>;
-        countBy<K extends keyof T>(this: T[], key: K): Set<T[K]>;
-        countBy<K>(this: T[], selector: (item: T) => K): Set<K>;
+        countBy<K extends keyof T>(this: T[], key: K): Map<T[K], number>;
+        countBy<K>(this: T[], selector: (item: T) => K): Map<K, number>;
     }
 }
 
@@ -153,14 +156,13 @@ defineIfNotExists(Array.prototype, 'last', function <T>(this: T[]): T | undefine
     return this[this.length - 1];
 });
 
-defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], callback?: (item: T) => number): number {
-    if (typeof callback === 'function') {
-        return this.reduce((acc: number, item: T) => acc + callback(item), 0);
+defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], selector?: Selector<T, number>): number {
+    if (this.length === 0) return 0;
+    const getValue = resolveSelector(selector, (item: T) => item as number);
+    if (this.every((item) => typeof getValue(item) === 'number')) {
+        return this.reduce((acc: number, item: T) => getValue(item) + acc, 0);
     }
-    if (this.every((item) => typeof item === 'number')) {
-        return (this as number[]).reduce((acc: number, item: number) => acc + item, 0);
-    }
-    throw new Error('Array.prototype.sum() requires a callback unless array is number[]');
+    throw new TypeError('Array.prototype.sum() requires a callback who return a number unless array is number[]');
 });
 
 defineIfNotExists(Array.prototype, 'unique', function <T>(this: T[]): T[] {
@@ -178,29 +180,26 @@ defineIfNotExists(Array.prototype, 'chunk', function <T>(this: T[], size: number
     return result;
 });
 
-defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], callback?: (item: T) => number): number {
+defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], selector?: Selector<T, number>): number {
     if (this.length === 0) return 0;
-    if (typeof callback === 'function') {
-        return this.reduce((acc: number, item: T) => acc + callback(item), 0) / this.length;
+    const getValue = resolveSelector(selector, (item: T) => item as number);
+    if (this.every((item) => typeof getValue(item) === 'number')) {
+        return this.reduce((acc: number, item: T) => getValue(item) + acc, 0) / this.length;
     }
-    if (this.every((item) => typeof item === 'number')) {
-        return (this as number[]).reduce((acc: number, item: number) => acc + item, 0) / this.length;
-    }
-    throw new Error('Array.prototype.average() requires a callback unless array is number[]');
+    throw new TypeError('Array.prototype.average() requires a callback who return a number unless array is number[]');
 });
 
-defineIfNotExists(Array.prototype, 'groupBy', function <T>(this: T[], callback: (item: T) => string | number): Record<
+defineIfNotExists(Array.prototype, 'groupBy', function <T>(this: T[], selector?: Selector<T, string | number>): Record<
     string | number,
     T[]
 > {
-    if (typeof callback !== 'function') {
-        throw new TypeError('Callback must be a function');
-    }
-    const result: Record<string, T[]> = {};
+    const getKey = resolveSelector(selector);
+
+    const result: Record<string | number, T[]> = {};
     this.forEach((item: T) => {
-        const key = callback(item);
+        const key = getKey(item);
         if (typeof key !== 'string' && typeof key !== 'number') {
-            throw new TypeError('groupBy callback must return a string or number');
+            throw new TypeError('groupBy selector must return a string or number');
         }
         if (!result[key]) result[key] = [];
         result[key].push(item);
@@ -216,7 +215,7 @@ defineIfNotExists(Array.prototype, 'enumerate', function <T>(this: T[]): [T, num
     return this.map((value, index) => [value, index]);
 });
 
-defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?: (item: T) => number | string): T[] {
+defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
     const arr = this.slice();
     if (arr.length === 0) return arr;
 
@@ -243,9 +242,7 @@ defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?:
     });
 });
 
-defineIfNotExists(Array.prototype, 'sortDesc', function <
-    T,
->(this: T[], selector?: keyof T | ((item: T) => number | string)): T[] {
+defineIfNotExists(Array.prototype, 'sortDesc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
     const arr = this.slice();
     if (arr.length === 0) return arr;
 
@@ -300,11 +297,8 @@ defineIfNotExists(Array.prototype, 'toMap', function <
     T,
     K,
     V,
->(this: T[] | [K, V][], keySelector?: keyof T | ((item: T) => K), valueSelector?: keyof T | ((item: T) => V)): Map<
-    number | K,
-    V | T
-> {
-    if (this.length && Array.isArray(this[0]) && this[0].length === 2) {
+>(this: T[] | [K, V][], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Map<number | K, V | T> {
+    if (!keySelector && this.length && this.every((item) => Array.isArray(item) && item.length === 2)) {
         return new Map(this as [K, V][]);
     }
 
@@ -322,14 +316,12 @@ defineIfNotExists(Array.prototype, 'toMap', function <
     return map;
 });
 
-defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: ((item: T) => K) | keyof T): Set<
-    T | K
-> {
+defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: Selector<T, K>): Set<T | K> {
     const getValue = resolveSelector(selector, (item: T) => item as K | T);
     return new Set(this.map(getValue));
 });
 
-defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selector?: ((item: T) => K) | keyof T): Map<
+defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selector?: Selector<T, K>): Map<
     K | T,
     number
 > {
