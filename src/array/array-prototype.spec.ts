@@ -79,22 +79,32 @@ describe('Array prototype extensions', () => {
         });
     });
 
-    describe('groupBy', () => {
-        it('should group items by callback result', () => {
-            const items = ['a', 'ab', 'abc'];
-            const result = items.groupBy((item) => item.length);
-            expect(result).toEqual({ 1: ['a'], 2: ['ab'], 3: ['abc'] });
+    describe('Array.prototype.groupBy', () => {
+        it('groups by a property key (string)', () => {
+            const arr = [
+                { type: 'a', value: 1 },
+                { type: 'b', value: 2 },
+                { type: 'a', value: 3 },
+            ];
+            const map = arr.groupBy('type');
+            expect(map instanceof Map).toBe(true);
+            expect(map.get('a')).toEqual([
+                { type: 'a', value: 1 },
+                { type: 'a', value: 3 },
+            ]);
+            expect(map.get('b')).toEqual([{ type: 'b', value: 2 }]);
         });
-        it('should group items by key', () => {
-            const items = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
-            const result = items.groupBy('type');
-            expect(result).toEqual({ x: [{ type: 'x' }, { type: 'x' }], y: [{ type: 'y' }] });
+
+        it('groups by a selector function', () => {
+            const arr = [1, 2, 3, 4, 5, 6];
+            const map = arr.groupBy((x) => (x % 2 === 0 ? 'even' : 'odd'));
+            expect(map instanceof Map).toBe(true);
+            expect(map.get('even')).toEqual([2, 4, 6]);
+            expect(map.get('odd')).toEqual([1, 3, 5]);
         });
-        it('should throw if callback is not a function', () => {
-            expect(() => [1, 2, 3].groupBy(null as any)).toThrow(TypeError);
-        });
-        it('should throw if callback does not return string or number', () => {
-            expect(() => [1, 2, 3].groupBy(() => ({} as any))).toThrow(TypeError);
+
+        it('returns an empty Map for an empty array', () => {
+            expect([].groupBy((x) => x)).toEqual(new Map());
         });
     });
 

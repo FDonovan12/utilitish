@@ -52,12 +52,13 @@ declare global {
         average(this: T[], callback: (item: T) => number): number;
 
         /**
-         * Groups the array elements based on a key returned by the callback function.
-         * @param callback - Function that returns a key to group by.
-         * @returns An object where keys are the group names and values are arrays of grouped items.
+         * Groups the array elements based on a key returned by the selector.
+         * The selector can be a function or a string key.
+         * @param selector Function or string key to group by.
+         * @returns A Map where keys are group values and values are arrays of grouped items.
          */
-        groupBy(this: T[], callback: (item: T) => string | number): Record<string | number, T[]>;
-        groupBy<K extends keyof T>(this: T[], key: K): Record<string | number, T[]>;
+        groupBy<K extends keyof T>(this: T[], key: K): Map<T[K], T[]>;
+        groupBy<K>(this: T[], selector: (item: T) => K): Map<K, T[]>;
 
         /**
          * Removes all falsy values (`false`, `null`, `0`, `""`, `undefined`, and `NaN`) from the array.
@@ -189,22 +190,18 @@ defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], selector?:
     throw new TypeError('Array.prototype.average() requires a callback who return a number unless array is number[]');
 });
 
-defineIfNotExists(Array.prototype, 'groupBy', function <T>(this: T[], selector?: Selector<T, string | number>): Record<
-    string | number,
-    T[]
-> {
-    const getKey = resolveSelector(selector);
+defineIfNotExists(Array.prototype, 'groupBy', function <T, K>(this: T[], selector?: Selector<T, K>): Map<K, T[]> {
+    const getKey = resolveSelector(selector, (item: T) => item as unknown as K);
 
-    const result: Record<string | number, T[]> = {};
-    this.forEach((item: T) => {
+    const map = new Map<K, T[]>();
+    for (const item of this) {
         const key = getKey(item);
-        if (typeof key !== 'string' && typeof key !== 'number') {
-            throw new TypeError('groupBy selector must return a string or number');
+        if (!map.has(key)) {
+            map.set(key, []);
         }
-        if (!result[key]) result[key] = [];
-        result[key].push(item);
-    });
-    return result;
+        map.get(key)!.push(item);
+    }
+    return map;
 });
 
 defineIfNotExists(Array.prototype, 'compact', function <T>(this: T[]): T[] {
