@@ -49,7 +49,7 @@ export function assertValidSelector<T, R>(
 }
 
 export function isNumberOrString(value: unknown): value is string | number {
-    return value === 'string' || typeof value === 'number';
+    return typeof value === 'string' || typeof value === 'number';
 }
 
 export type Selector<T, K> = keyof T | ((item: T) => K);

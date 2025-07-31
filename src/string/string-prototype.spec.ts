@@ -1,4 +1,4 @@
-import './string-prototype';
+import '../string/string-prototype';
 
 describe('String prototype extensions', () => {
     describe('capitalize', () => {
@@ -78,6 +78,51 @@ describe('String prototype extensions', () => {
             expect('Hello World!'.slugify()).toBe('hello-world');
             expect("Éléphant à l'été".slugify()).toBe('elephant-a-l-ete');
             expect('  --Hello__World--  '.slugify()).toBe('hello-world');
+        });
+    });
+
+    describe('String.prototype.replaceRange', () => {
+        it('replaces a single character at the given index', () => {
+            expect('hello'.replaceRange(1, 2, 'a')).toBe('hallo');
+        });
+
+        it('replaces a range of characters', () => {
+            expect('abcdef'.replaceRange(2, 5, 'Z')).toBe('abZf');
+        });
+
+        it('removes a range if replaceString is omitted', () => {
+            expect('abcdef'.replaceRange(1, 4)).toBe('aef');
+        });
+
+        it('works when start > end (swaps automatically)', () => {
+            expect('abcdef'.replaceRange(5, 2, 'X')).toBe('abXf');
+        });
+
+        it('inserts at the end if start and end are equal to length', () => {
+            expect('abc'.replaceRange(3, 3, 'Z')).toBe('abcZ');
+        });
+
+        it('throws if start or end is negative', () => {
+            expect(() => 'abc'.replaceRange(-1, 2)).toThrow(RangeError);
+            expect(() => 'abc'.replaceRange(1, -2)).toThrow(RangeError);
+        });
+
+        it('throws if start or end is out of bounds', () => {
+            expect(() => 'abc'.replaceRange(0, 4)).toThrow(RangeError);
+            expect(() => 'abc'.replaceRange(5, 1)).toThrow(RangeError);
+        });
+
+        it('throws if start or end is not an integer', () => {
+            expect(() => 'abc'.replaceRange(1.5, 2)).toThrow(TypeError);
+            expect(() => 'abc'.replaceRange(1, 2.2)).toThrow(TypeError);
+        });
+
+        it('defaults replaceString to empty string', () => {
+            expect('hello'.replaceRange(1, 4)).toBe('ho');
+        });
+
+        it('supports empty string', () => {
+            expect(''.replaceRange(0, 0, 'x')).toBe('x');
         });
     });
 });

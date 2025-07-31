@@ -155,9 +155,9 @@ describe('Array prototype extensions', () => {
         it('returns [] for an empty array', () => {
             expect([].sortAsc()).toEqual([]);
         });
-        // it('throws if callback does not return a sortable type', () => {
-        //     expect(() => [{ v: {} }].sortAsc((x) => x.v as any)).toThrow(TypeError);
-        // });
+        it('throws if callback does not return a sortable type', () => {
+            expect(() => [{ v: {} }, { v: {} }].sortAsc((x) => x.v as any)).toThrow(TypeError);
+        });
         it('throws if elements are not sortable without callback', () => {
             expect(() => [{ v: 1 } as any].sortAsc()).toThrow(TypeError);
         });
@@ -181,9 +181,9 @@ describe('Array prototype extensions', () => {
         it('returns [] for an empty array', () => {
             expect([].sortDesc()).toEqual([]);
         });
-        // it('throws if callback does not return a sortable type', () => {
-        //     expect(() => [{ v: {} }].sortDesc((x) => x.v as any)).toThrow(TypeError);
-        // });
+        it('throws if callback does not return a sortable type', () => {
+            expect(() => [{ v: {} }, { v: {} }].sortDesc((x) => x.v as any)).toThrow(TypeError);
+        });
         it('throws if elements are not sortable without callback', () => {
             expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
         });

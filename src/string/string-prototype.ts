@@ -58,6 +58,18 @@ declare global {
          * @returns A slugified version of the string.
          */
         slugify(): string;
+
+        /**
+         * Replaces a substring between `start` and `end` indices with a given string.
+         * If `end` is not provided, only the character at `start` is replaced.
+         * If `replaceString` is not provided, the range is simply removed.
+         *
+         * @param start - Start index of the replacement (inclusive).
+         * @param end - End index of the replacement (exclusive). Defaults to `start`.
+         * @param replaceString - The string to insert in place. Defaults to `''`.
+         * @returns A new string with the specified range replaced.
+         */
+        replaceRange(start: number, end: number, replaceString?: string): string;
     }
 }
 
@@ -73,9 +85,7 @@ defineIfNotExists(String.prototype, 'splitWords', function (this: string): strin
 defineIfNotExists(String.prototype, 'camelCase', function (this: string): string {
     const words = this.splitWords().map((w: string) => w.toLowerCase());
     return words
-        .map((word: string, i: number) =>
-            i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
-        )
+        .map((word: string, i: number) => (i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
         .join('');
 });
 
@@ -118,3 +128,21 @@ defineIfNotExists(String.prototype, 'capitalize', function (this: string): strin
     if (this.length === 0) return '';
     return this.charAt(0).toUpperCase() + this.slice(1);
 });
+
+defineIfNotExists(
+    String.prototype,
+    'replaceRange',
+    function (this: string, start: number, end: number, replaceString: string = ''): string {
+        if (!Number.isInteger(start) || !Number.isInteger(end)) {
+            throw new TypeError('start and end must be integers');
+        }
+        if (start < 0 || end < 0) {
+            throw new RangeError('start or end cannot be negative');
+        }
+        if (start > this.length || end > this.length) {
+            throw new RangeError('start or end is out of bounds');
+        }
+        if (start > end) [start, end] = [end, start];
+        return this.slice(0, start) + (replaceString ?? '') + this.slice(end);
+    },
+);

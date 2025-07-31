@@ -1,4 +1,4 @@
-import { defineIfNotExists, resolveSelector, Selector } from '../utils';
+import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils';
 
 export {};
 
@@ -212,58 +212,37 @@ defineIfNotExists(Array.prototype, 'enumerate', function <T>(this: T[]): [T, num
     return this.map((value, index) => [value, index]);
 });
 
-defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
-    const arr = this.slice();
-    if (arr.length === 0) return arr;
+defineIfNotExists(Array.prototype, 'sortBy', function <
+    T,
+>(this: T[], direction: 'asc' | 'desc', selector?: Selector<T, number | string>): T[] {
+    if (this.length === 0) return this.slice();
 
     const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
 
-    if (!selector && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
+    if (!selector && !this.every((item) => isNumberOrString(item))) {
         throw new TypeError('Array elements must be number or string if no selector is provided');
     }
 
-    return arr.sort((a, b) => {
+    return this.slice().sort((a, b) => {
         const valA = getValue(a);
         const valB = getValue(b);
 
-        if (
-            (typeof valA !== 'number' && typeof valA !== 'string') ||
-            (typeof valB !== 'number' && typeof valB !== 'string')
-        ) {
+        if (!isNumberOrString(valA) || !isNumberOrString(valB)) {
             throw new TypeError('Callback must return number or string');
         }
 
-        if (valA > valB) return 1;
-        if (valA < valB) return -1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
         return 0;
     });
 });
 
+defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
+    return sortBy(this, 'asc', selector);
+});
+
 defineIfNotExists(Array.prototype, 'sortDesc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
-    const arr = this.slice();
-    if (arr.length === 0) return arr;
-
-    const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
-
-    if (!selector && !arr.every((item) => typeof item === 'number' || typeof item === 'string')) {
-        throw new TypeError('Array elements must be number or string if no selector is provided');
-    }
-
-    return arr.sort((a, b) => {
-        const valA = getValue(a);
-        const valB = getValue(b);
-
-        if (
-            (typeof valA !== 'number' && typeof valA !== 'string') ||
-            (typeof valB !== 'number' && typeof valB !== 'string')
-        ) {
-            throw new TypeError('Selector must return number or string');
-        }
-
-        if (valA > valB) return -1;
-        if (valA < valB) return 1;
-        return 0;
-    });
+    return sortBy(this, 'desc', selector);
 });
 
 defineIfNotExists(Array.prototype, 'swap', function <T>(this: T[], i: number, j: number): T[] {
@@ -330,3 +309,26 @@ defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selecto
     }
     return map;
 });
+
+function sortBy<T>(arr: T[], direction: 'asc' | 'desc', selector?: Selector<T, number | string>): T[] {
+    if (arr.length === 0) return arr.slice();
+
+    const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
+
+    if (!selector && !arr.every((item) => isNumberOrString(item))) {
+        throw new TypeError('Array elements must be number or string if no selector is provided');
+    }
+
+    return arr.slice().sort((a, b) => {
+        const valA = getValue(a);
+        const valB = getValue(b);
+
+        if (!isNumberOrString(valA) || !isNumberOrString(valB)) {
+            throw new TypeError('Callback must return number or string');
+        }
+
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        return 0;
+    });
+}
