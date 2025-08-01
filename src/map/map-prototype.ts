@@ -24,7 +24,7 @@ declare global {
          * @param key - The key to look up in the map.
          * @returns The array associated with the key.
          */
-        ensureArray(this: Map<K, V[]>, key: K): V[];
+        ensureArray<L extends Array<any>>(this: Map<K, L>, key: K): L;
     }
 }
 
@@ -63,8 +63,15 @@ defineIfNotExists(Map.prototype, 'toList', function <
 });
 
 defineIfNotExists(Map.prototype, 'ensureArray', function <K, V>(this: Map<K, V[]>, key: K): V[] {
+    if (key === null || key === undefined) {
+        throw new TypeError('Key cannot be null or undefined');
+    }
     if (!this.has(key)) {
         this.set(key, []);
     }
-    return this.get(key)!;
+    const arr = this.get(key);
+    if (!Array.isArray(arr)) {
+        throw new TypeError('Value for the key is not an array');
+    }
+    return arr;
 });

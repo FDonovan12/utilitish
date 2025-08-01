@@ -70,3 +70,42 @@ describe('Map.prototype.toList', () => {
         expect(() => map.toList('unknown')).toThrow(TypeError);
     });
 });
+
+describe('Map.prototype.ensureArray', () => {
+    it('returns an empty array if the key does not exist', () => {
+        const map = new Map<string, number[]>();
+        const arr = map.ensureArray('foo');
+        expect(Array.isArray(arr)).toBe(true);
+        expect(arr).toEqual([]);
+        expect(map.get('foo')).toBe(arr);
+    });
+
+    it('returns the existing array for the key', () => {
+        const map = new Map<string, number[]>();
+        map.set('bar', [1, 2]);
+        const arr = map.ensureArray('bar');
+        expect(arr).toEqual([1, 2]);
+        expect(map.get('bar')).toBe(arr);
+    });
+
+    it('throws if the key is null or undefined', () => {
+        const map = new Map<any, any[]>();
+        expect(() => map.ensureArray(null)).toThrow(TypeError);
+        expect(() => map.ensureArray(undefined)).toThrow(TypeError);
+    });
+
+    it('throws if the value for the key is not an array', () => {
+        const map = new Map<string, any>();
+        map.set('baz', 123);
+        expect(() => map.ensureArray('baz')).toThrow(TypeError);
+    });
+
+    it('works with non-string keys', () => {
+        const key = { id: 1 };
+        const map = new Map<object, any[]>();
+        const arr = map.ensureArray(key);
+        expect(Array.isArray(arr)).toBe(true);
+        expect(arr).toEqual([]);
+        expect(map.get(key)).toBe(arr);
+    });
+});
