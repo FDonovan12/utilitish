@@ -1,3 +1,4 @@
+import '../array/array-constructor';
 import './array-constructor';
 
 describe('Array Constructor extensions', () => {
@@ -70,7 +71,7 @@ describe('Array Constructor extensions', () => {
             expect(Array.zip()).toEqual([]);
         });
 
-        it('should return an array of undefineds if all arrays are empty', () => {
+        it('should return an array of undefined if all arrays are empty', () => {
             expect(Array.zip([], [])).toEqual([]);
         });
 
@@ -84,6 +85,58 @@ describe('Array Constructor extensions', () => {
                 [undefined, 3],
                 [undefined, 4],
             ]);
+        });
+    });
+
+    describe('create', () => {
+        it('creates a 1D array', () => {
+            expect(Array.create('x', 3)).toEqual(['x', 'x', 'x']);
+        });
+
+        it('creates a 2D array', () => {
+            expect(Array.create(0, 2, 3)).toEqual([
+                [0, 0, 0],
+                [0, 0, 0],
+            ]);
+        });
+
+        it('creates a 3D array', () => {
+            expect(Array.create(true, 2, 2, 2)).toEqual([
+                [
+                    [true, true],
+                    [true, true],
+                ],
+                [
+                    [true, true],
+                    [true, true],
+                ],
+            ]);
+        });
+
+        it('returns [] if no sizes are given', () => {
+            expect(Array.create('x')).toEqual([]);
+        });
+
+        it('returns [] if any size is 0', () => {
+            expect(Array.create('x', 0)).toEqual([]);
+            expect(Array.create('x', 2, 0)).toEqual([[], []]);
+        });
+
+        it('throws if a size is negative', () => {
+            expect(() => Array.create('x', -1)).toThrow(TypeError);
+            expect(() => Array.create('x', 2, -3)).toThrow(TypeError);
+        });
+
+        it('throws if a size is not an integer', () => {
+            expect(() => Array.create('x', 2.5)).toThrow(TypeError);
+            expect(() => Array.create('x', 2, 1.1)).toThrow(TypeError);
+        });
+
+        it('returns arrays with the same object reference for objects', () => {
+            const obj = { a: 1 };
+            const arr = Array.create(obj, 2);
+            expect(arr[0]).toBe(obj);
+            expect(arr[1]).toBe(obj);
         });
     });
 });

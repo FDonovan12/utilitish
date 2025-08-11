@@ -6,7 +6,17 @@ const tsJestTransformCfg = createDefaultPreset().transform;
 module.exports = {
     testEnvironment: 'node',
     testMatch: ['**/*.spec.ts'],
+    testPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/', '/docs/'],
     transform: {
         ...tsJestTransformCfg,
     },
+    globals: {
+        'ts-jest': {
+            isolatedModules: true,
+            diagnostics: false,
+        },
+    },
+    cacheDirectory: '<rootDir>/node_modules/.cache/jest',
+    watchPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/', '/docs/'],
+    verbose: false,
 };
