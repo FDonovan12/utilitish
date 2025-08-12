@@ -59,26 +59,30 @@ declare global {
          *
          * @example
          * // 1D array with primitive values
-         * Array.create('x', 5);
-         * // => ['x', 'x', 'x', 'x', 'x']
+         * const arr1 = Array.create('x', 5);
+         * // type: string[]
+         * // value: ['x', 'x', 'x', 'x', 'x']
          *
          * @example
          * // 1D array with random numbers
-         * Array.create(() => Math.random(), 5);
-         * // => [0.12, 0.87, 0.45, 0.76, 0.33] (values will differ)
+         * const arr2 = Array.create(() => Math.random(), 5);
+         * // type: number[]
+         * // value: [0.12, 0.87, 0.45, 0.76, 0.33] (values will differ)
          *
          * @example
          * // 2D array (matrix)
-         * Array.create(0, 2, 3);
-         * // => [[0, 0, 0], [0, 0, 0]]
+         * const arr3 = Array.create(0, 2, 3);
+         * // type: number[][]
+         * // value: [[0, 0, 0], [0, 0, 0]]
          *
          * @example
          * // 2D array with distinct objects
-         * Array.create(() => ({ id: 0 }), 2, 3);
-         * // => [
-         * //      [{id:0}, {id:0}, {id:0}],
-         * //      [{id:0}, {id:0}, {id:0}]
-         * //    ]
+         * const arr4 = Array.create(() => ({ id: 0 }), 2, 3);
+         * // type: { id: number }[][]
+         * // value: [
+         * //   [{ id: 0 }, { id: 0 }, { id: 0 }],
+         * //   [{ id: 0 }, { id: 0 }, { id: 0 }]
+         * // ]
          *
          * @notes
          * - If `sizes.length === 0`, returns `[]`.
@@ -89,12 +93,15 @@ declare global {
          * @template T
          * @param {T | (() => T)} valueOrFactory The value to fill the array with, or a factory function producing values.
          * @param {...number} sizes Sizes for each dimension (1D => one number, 2D => two numbers, etc.).
-         * @returns {any[]} A multi-dimensional array of depth `sizes.length` filled with values from `valueOrFactory`.
+         * @returns {Array} A multi-dimensional array of the specified depth filled with the given values.
          *
          * @remarks
          * - This method is **static** and must be called on `Array`, not on an instance.
          */
-        create<T>(valueOrFactory: T | (() => T), ...sizes: number[]): any[];
+        create<T, Dims extends number[]>(
+            valueOrFactory: T | (() => T),
+            ...sizes: Dims
+        ): MultiDimensionalArray<WidenLiterals<T>, Dims>;
     }
 }
 
@@ -137,15 +144,23 @@ defineStaticIfNotExists(Array, 'repeat', function <T>(length: number, value: T |
 /**
  * @see Array.create
  */
-defineStaticIfNotExists(Array, 'create', function <T>(valueOrFactory: T | (() => T), ...sizes: number[]): any[] {
-    if (sizes.length === 0) return [];
+defineStaticIfNotExists(Array, 'create', function <
+    T,
+    Dims extends number[],
+>(valueOrFactory: T | (() => T), ...sizes: Dims): MultiDimensionalArray<WidenLiterals<T>, Dims> {
+    if (sizes.length === 0) return [] as any;
     if (!sizes.every((s) => Number.isInteger(s) && s >= 0)) {
         throw new TypeError('All sizes must be non-negative integers');
     }
     const getValue = typeof valueOrFactory === 'function' ? (valueOrFactory as () => T) : () => valueOrFactory;
-    const createDimension = (dimIndex: number): any[] =>
+    const createDimension = (dimIndex: number): any =>
         Array.from({ length: sizes[dimIndex] }, () =>
             dimIndex === sizes.length - 1 ? getValue() : createDimension(dimIndex + 1),
         );
     return createDimension(0);
 });
+
+type MultiDimensionalArray<T, Dims extends number[]> = Dims extends [number, ...infer Rest extends number[]]
+    ? MultiDimensionalArray<T[], Rest>
+    : T;
+type WidenLiterals<T> = T extends string ? string : T extends number ? number : T extends boolean ? boolean : T;
