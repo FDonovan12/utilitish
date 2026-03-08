@@ -122,9 +122,31 @@ declare global {
          */
         toMap<K, V>(this: [K, V][]): Map<K, V>;
         toMap<K extends keyof T>(this: T[], key: K): Map<T[K], T>;
+        toMap<K extends keyof T, V>(this: T[], key: K, valueCallback: (item: T) => V): Map<T[K], V>;
         toMap<K, V>(): Map<number, T>;
         toMap<K, V>(this: T[], keyCallback: (item: T) => K): Map<K, T>;
         toMap<K, V>(this: T[], keyCallback: (item: T) => K, valueCallback: (item: T) => V): Map<K, V>;
+
+        /**
+         * Converts an array to an object.
+         * - If the array is of pairs [K, V], returns Record<K, V>.
+         * - If a key is provided, returns Record<T[K], T>.
+         * - If no key is provided, uses the array index as key.
+         * - If keySelector and valueSelector are provided, returns Record<K, V>.
+         *
+         * @param keyOrKeySelector Key name or key selector function.
+         * @param valueSelector Value selector function.
+         */
+        toObject<K extends PropertyKey, V>(this: [K, V][]): Record<K, V>;
+        toObject<K extends keyof T>(this: T[], key: K): Record<T[K] & PropertyKey, T>;
+        toObject<K extends keyof T, V>(this: T[], key: K, valueCallback: (item: T) => V): Record<T[K] & PropertyKey, V>;
+        toObject<K, V>(this: T[]): Record<number, T>;
+        toObject<K extends PropertyKey>(this: T[], keyCallback: (item: T) => K): Record<K, T>;
+        toObject<K extends PropertyKey, V>(
+            this: T[],
+            keyCallback: (item: T) => K,
+            valueCallback: (item: T) => V,
+        ): Record<K, V>;
 
         /**
          * Returns a Set containing the unique elements of the array.
@@ -290,6 +312,39 @@ defineIfNotExists(Array.prototype, 'toMap', function <
         map.set(key, value);
     }
     return map;
+});
+
+defineIfNotExists(Array.prototype, 'toObject', function <
+    T,
+    K extends PropertyKey,
+    V,
+>(this: T[], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Record<K, V | T> {
+    const map = (this as T[]).toMap(keySelector as any, valueSelector as any);
+
+    const obj: Record<PropertyKey, any> = {};
+
+    for (const [k, v] of map) {
+        // Validate that key is a valid PropertyKey (string or number, not symbol or null/undefined)
+        if (k === null || k === undefined) {
+            throw new TypeError(`Invalid key: key cannot be null or undefined. Key received: ${String(k)}`);
+        }
+
+        const keyType = typeof k;
+        if (keyType !== 'string' && keyType !== 'number') {
+            throw new TypeError(
+                `Invalid key type: keys must be string or number, received ${keyType}. Key value: ${String(k)}`,
+            );
+        }
+
+        // Ensure the key is not a symbol (which is not a valid object key for plain objects)
+        if (Object.getOwnPropertySymbols([k] as any).length > 0) {
+            throw new TypeError('Invalid key: symbols cannot be used as object keys');
+        }
+
+        obj[k as PropertyKey] = v;
+    }
+
+    return obj as Record<K, V | T>;
 });
 
 defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: Selector<T, K>): Set<T | K> {

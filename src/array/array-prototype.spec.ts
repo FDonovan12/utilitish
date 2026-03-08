@@ -256,6 +256,18 @@ describe('Array prototype extensions', () => {
             expect(map.get(2)).toBe('bar');
         });
 
+        it('converts array of objects to Map using key string and value selectors', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const map = arr.toMap('id', (x) => x.name);
+            expect(map instanceof Map).toBe(true);
+            expect(map.size).toBe(2);
+            expect(map.get(1)).toBe('foo');
+            expect(map.get(2)).toBe('bar');
+        });
+
         it('converts array of objects to Map using key without value selectors', () => {
             const arr = [
                 { id: 1, name: 'foo' },
@@ -359,6 +371,167 @@ describe('Array prototype extensions', () => {
         });
         it('throws if arguments are invalid', () => {
             expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+        });
+    });
+
+    describe('Array.prototype.toObject', () => {
+        it('converts array of pairs to object', () => {
+            const arr: [string, number][] = [
+                ['a', 1],
+                ['b', 2],
+                ['c', 3],
+            ];
+            const obj = arr.toObject();
+            expect(obj).toEqual({ a: 1, b: 2, c: 3 });
+            expect(typeof obj).toBe('object');
+        });
+
+        it('converts array of pairs with numeric keys to object', () => {
+            const arr: [number, string][] = [
+                [1, 'a'],
+                [2, 'b'],
+                [3, 'c'],
+            ];
+            const obj = arr.toObject();
+            expect(obj).toEqual({ 1: 'a', 2: 'b', 3: 'c' });
+        });
+
+        it('converts array of objects to object using key string', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const obj = arr.toObject('id');
+            expect(obj).toEqual({
+                1: { id: 1, name: 'foo' },
+                2: { id: 2, name: 'bar' },
+            });
+        });
+
+        it('converts array of objects to object using key callback', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const obj = arr.toObject((x) => x.id);
+            expect(obj).toEqual({
+                1: { id: 1, name: 'foo' },
+                2: { id: 2, name: 'bar' },
+            });
+        });
+
+        it('converts array of objects using key callback and value callback', () => {
+            const arr = [
+                { id: 1, name: 'foo' },
+                { id: 2, name: 'bar' },
+            ];
+            const obj = arr.toObject(
+                (x) => x.id,
+                (x) => x.name,
+            );
+            expect(obj).toEqual({
+                1: 'foo',
+                2: 'bar',
+            });
+        });
+
+        it('converts array without selector (uses index as key)', () => {
+            const arr = ['a', 'b', 'c'];
+            const obj = arr.toObject();
+            expect(obj).toEqual({
+                0: 'a',
+                1: 'b',
+                2: 'c',
+            });
+        });
+
+        it('converts empty array to empty object', () => {
+            const arr: any[] = [];
+            const obj = arr.toObject();
+            expect(obj).toEqual({});
+        });
+
+        it('handles objects with string and numeric keys', () => {
+            const arr = [
+                { key: 'name', value: 'Alice' },
+                { key: 'age', value: 30 },
+            ];
+            const obj = arr.toObject(
+                (x) => x.key,
+                (x) => x.value,
+            );
+            expect(obj).toEqual({
+                name: 'Alice',
+                age: 30,
+            });
+        });
+
+        it('throws error when key selector returns null', () => {
+            const arr = [{ id: 1, name: 'foo' }];
+            expect(() =>
+                arr.toObject(
+                    (x) => null as any,
+                    (x) => x.name,
+                ),
+            ).toThrow(TypeError);
+        });
+
+        it('throws error when key selector returns undefined', () => {
+            const arr = [{ id: 1, name: 'foo' }];
+            expect(() =>
+                arr.toObject(
+                    (x) => undefined as any,
+                    (x) => x.name,
+                ),
+            ).toThrow(TypeError);
+        });
+
+        it('throws error when key is not a string or number', () => {
+            const arr = [{ id: { nested: 1 }, name: 'foo' }];
+            expect(() => arr.toObject((x) => x.id as any)).toThrow(TypeError);
+        });
+
+        it('overwrites duplicate keys with the last value', () => {
+            const arr = [
+                { id: 1, value: 'first' },
+                { id: 1, value: 'second' },
+            ];
+            const obj = arr.toObject(
+                (x) => x.id,
+                (x) => x.value,
+            );
+            expect(obj).toEqual({
+                1: 'second',
+            });
+        });
+
+        it('handles mixed types in array', () => {
+            const arr = [
+                { id: 'x', value: 10 },
+                { id: 'y', value: 20 },
+            ];
+            const obj = arr.toObject(
+                (x) => x.id,
+                (x) => x.value,
+            );
+            expect(obj).toEqual({
+                x: 10,
+                y: 20,
+            });
+        });
+
+        it('converts with string key and different value types', () => {
+            const arr = [
+                { id: 1, data: 'text' },
+                { id: 2, data: 42 },
+                { id: 3, data: null },
+            ];
+            const obj = arr.toObject('id', (x) => x.data);
+            expect(obj).toEqual({
+                1: 'text',
+                2: 42,
+                3: null,
+            });
         });
     });
 });
