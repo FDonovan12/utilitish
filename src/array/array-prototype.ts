@@ -1,3 +1,4 @@
+import '../map/map-prototype'; // ensure Map extensions (toObject) are available when arrays convert to objects
 import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils';
 
 export {};
@@ -321,30 +322,7 @@ defineIfNotExists(Array.prototype, 'toObject', function <
 >(this: T[], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Record<K, V | T> {
     const map = (this as T[]).toMap(keySelector as any, valueSelector as any);
 
-    const obj: Record<PropertyKey, any> = {};
-
-    for (const [k, v] of map) {
-        // Validate that key is a valid PropertyKey (string or number, not symbol or null/undefined)
-        if (k === null || k === undefined) {
-            throw new TypeError(`Invalid key: key cannot be null or undefined. Key received: ${String(k)}`);
-        }
-
-        const keyType = typeof k;
-        if (keyType !== 'string' && keyType !== 'number') {
-            throw new TypeError(
-                `Invalid key type: keys must be string or number, received ${keyType}. Key value: ${String(k)}`,
-            );
-        }
-
-        // Ensure the key is not a symbol (which is not a valid object key for plain objects)
-        if (Object.getOwnPropertySymbols([k] as any).length > 0) {
-            throw new TypeError('Invalid key: symbols cannot be used as object keys');
-        }
-
-        obj[k as PropertyKey] = v;
-    }
-
-    return obj as Record<K, V | T>;
+    return (map as unknown as Map<PropertyKey, any>).toObject() as Record<K, V | T>;
 });
 
 defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: Selector<T, K>): Set<T | K> {
