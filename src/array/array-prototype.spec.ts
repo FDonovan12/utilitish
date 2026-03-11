@@ -2,31 +2,37 @@ import './array-prototype';
 
 describe('Array.prototype', () => {
     describe('first()', () => {
-        it.each([
-            { input: [1, 2, 3], expected: 1 },
-            { input: [], expected: undefined },
-        ])('should return $expected when array is $input', ({ input, expected }) => {
-            expect(input.first()).toBe(expected);
+        it('should return first element of non-empty array', () => {
+            expect([1, 2, 3].first()).toBe(1);
+        });
+
+        it('should return undefined for empty array', () => {
+            expect([].first()).toBe(undefined);
         });
     });
 
     describe('last()', () => {
-        it.each([
-            { input: [1, 2, 3], expected: 3 },
-            { input: [], expected: undefined },
-        ])('should return $expected when array is $input', ({ input, expected }) => {
-            expect(input.last()).toBe(expected);
+        it('should return last element of non-empty array', () => {
+            expect([1, 2, 3].last()).toBe(3);
+        });
+
+        it('should return undefined for empty array', () => {
+            expect([].last()).toBe(undefined);
         });
     });
 
     describe('sum()', () => {
         describe('with number arrays', () => {
-            it.each([
-                { input: [1, 2, 3], expected: 6 },
-                { input: [], expected: 0 },
-                { input: [0], expected: 0 },
-            ])('should return $expected when array is $input', ({ input, expected }) => {
-                expect(input.sum()).toBe(expected);
+            it('should return sum of all numbers', () => {
+                expect([1, 2, 3].sum()).toBe(6);
+            });
+
+            it('should return 0 for empty array', () => {
+                expect([].sum()).toBe(0);
+            });
+
+            it('should return 0 when array contains only 0', () => {
+                expect([0].sum()).toBe(0);
             });
         });
 
@@ -54,11 +60,12 @@ describe('Array.prototype', () => {
 
     describe('average()', () => {
         describe('with number arrays', () => {
-            it.each([
-                { input: [2, 4, 6], expected: 4 },
-                { input: [], expected: 0 },
-            ])('should return $expected when array is $input', ({ input, expected }) => {
-                expect(input.average()).toBe(expected);
+            it('should return average of all numbers', () => {
+                expect([2, 4, 6].average()).toBe(4);
+            });
+
+            it('should return 0 for empty array', () => {
+                expect([].average()).toBe(0);
             });
         });
 
@@ -92,18 +99,15 @@ describe('Array.prototype', () => {
 
     describe('chunk()', () => {
         describe('with valid size', () => {
-            it.each([
-                {
-                    input: [1, 2, 3, 4],
-                    size: 2,
-                    expected: [
-                        [1, 2],
-                        [3, 4],
-                    ],
-                },
-                { input: [1, 2, 3], size: 2, expected: [[1, 2], [3]] },
-            ])('should split array into chunks when size is $size', ({ input, size, expected }) => {
-                expect(input.chunk(size)).toEqual(expected);
+            it('should split array into chunks of even elements', () => {
+                expect([1, 2, 3, 4].chunk(2)).toEqual([
+                    [1, 2],
+                    [3, 4],
+                ]);
+            });
+
+            it('should include partial chunk at end when array does not divide evenly', () => {
+                expect([1, 2, 3].chunk(2)).toEqual([[1, 2], [3]]);
             });
         });
 
