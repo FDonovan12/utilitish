@@ -7,119 +7,312 @@ declare global {
     interface Array<T> {
         /**
          * Returns the first element of the array, or `undefined` if the array is empty.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to get the first element from
+         * @returns {T | undefined} The first element or undefined if the array is empty
+         *
+         * @example
+         * [1, 2, 3].first(); // 1
+         * [].first(); // undefined
          */
         first(): T | undefined;
 
         /**
          * Returns the last element of the array, or `undefined` if the array is empty.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to get the last element from
+         * @returns {T | undefined} The last element or undefined if the array is empty
+         *
+         * @example
+         * [1, 2, 3].last(); // 3
+         * [].last(); // undefined
          */
         last(): T | undefined;
 
         /**
          * Calculates the sum of the array values.
-         * - If the array is of type `number[]`, no callback is required.
-         * - Otherwise, a callback must be provided to extract a numeric value.
+         * Supports bare number arrays or objects with a selector to extract numeric values.
          *
-         * @param callback - Optional function that returns a `number` from an item.
-         * @throws {Error} If no callback is provided for a non-number array.
-         * @returns The sum of the values.
+         * @template T The type of array elements
+         * @this {number[]|T[]} The array to sum
+         * @param {Selector<T, number>} [selector] - Optional function or property key to extract numbers
+         * @returns {number} The sum of all values (0 for empty arrays)
+         * @throws {TypeError} If array is not of type number[] and no selector is provided
+         *
+         * @example
+         * [1, 2, 3].sum(); // 6
+         * [].sum(); // 0
+         * [{ x: 1 }, { x: 2 }].sum(x => x.x); // 3
+         * [{ x: 1 }, { x: 2 }].sum('x'); // 3
+         *
+         * @remarks
+         * - For number arrays, no selector is required
+         * - For object arrays, use property key string or callback function
+         * - Returns 0 for empty arrays regardless of type
          */
         sum(this: number[]): number;
         sum<K extends keyof T>(this: T[], key: K): number;
         sum(this: T[], callback: (item: T) => number): number;
 
         /**
-         * Returns a new array with only unique elements (based on strict equality).
+         * Returns a new array with only unique elements based on strict equality (===).
+         * Preserves order of first occurrence.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to filter
+         * @returns {T[]} A new array with duplicate values removed
+         *
+         * @example
+         * [1, 1, 2, 2, 3].unique(); // [1, 2, 3]
+         * [{id: 1}, {id: 1}, {id: 2}].unique(); // [{id: 1}, {id: 1}, {id: 2}] (objects compared by reference)
+         *
+         * @remarks
+         * - Uses Set internally for efficiency
+         * - Only removes duplicates based on strict equality
+         * - For object arrays, same reference is considered equal
          */
         unique(): T[];
 
         /**
-         * Splits the array into chunks of the given size.
-         * @param size - Maximum size of each chunk.
+         * Splits the array into chunks (sub-arrays) of a specified maximum size.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to chunk
+         * @param {number} size - Maximum size of each chunk (must be positive integer)
+         * @returns {T[][]} A new array of chunks, where each chunk has at most `size` elements
+         * @throws {TypeError} If size is not a positive integer
+         *
+         * @example
+         * [1, 2, 3, 4].chunk(2); // [[1, 2], [3, 4]]
+         * [1, 2, 3].chunk(2); // [[1, 2], [3]]
+         * [1, 2, 3, 4, 5].chunk(2); // [[1, 2], [3, 4], [5]]
+         *
+         * @remarks
+         * - Last chunk may have fewer elements if array length is not divisible by size
+         * - Empty array returns an empty array
          */
         chunk(size: number): T[][];
 
         /**
-         * Calculates the average of the array values.
-         * - If the array is of type `number[]`, no callback is required.
-         * - Otherwise, a callback must be provided to extract a numeric value.
+         * Calculates the average (mean) of the array values.
+         * Supports bare number arrays or objects with a selector to extract numeric values.
          *
-         * @param callback - Optional function that returns a `number` from an item.
-         * @throws {Error} If no callback is provided for a non-number array.
-         * @returns The average of the values.
+         * @template T The type of array elements
+         * @this {number[]|T[]} The array to average
+         * @param {Selector<T, number>} [selector] - Optional function or property key to extract numbers
+         * @returns {number} The average of all values (0 for empty arrays)
+         * @throws {TypeError} If array is not of type number[] and no selector is provided
+         *
+         * @example
+         * [2, 4, 6].average(); // 4
+         * [].average(); // 0
+         * [{x: 2}, {x: 4}].average(x => x.x); // 3
+         * [{x: 2}, {x: 4}].average('x'); // 3
+         *
+         * @remarks
+         * - For number arrays, no selector is required
+         * - Returns 0 for empty arrays (prevents division by zero)
+         * - For object arrays, use property key string or callback function
          */
         average(this: number[]): number;
         average<K extends keyof T>(this: T[], key: K): number;
         average(this: T[], callback: (item: T) => number): number;
 
         /**
-         * Groups the array elements based on a key returned by the selector.
-         * The selector can be a function or a string key.
-         * @param selector Function or string key to group by.
-         * @returns A Map where keys are group values and values are arrays of grouped items.
+         * Groups array elements into a Map based on a key returned by the selector.
+         * Elements with the same key are grouped together in an array.
+         *
+         * @template T The type of array elements
+         * @template K The type of grouping key (extracted from selector)
+         * @this {T[]} The array to group
+         * @param {Selector<T, K>} selector - Function or property key to extract the grouping key
+         * @returns {Map<K, T[]>} A Map where keys map to arrays of grouped items
+         *
+         * @example
+         * const arr = [{type: 'a', v: 1}, {type: 'b', v: 2}, {type: 'a', v: 3}];
+         * arr.groupBy('type');
+         * // Map { 'a' => [{type: 'a', v: 1}, {type: 'a', v: 3}], 'b' => [{type: 'b', v: 2}] }
+         *
+         * arr.groupBy(x => x.v % 2);
+         * // Map { 1 => [{type: 'a', v: 1}, {type: 'a', v: 3}], 0 => [{type: 'b', v: 2}] }
+         *
+         * @remarks
+         * - Order of groups in Map matches insertion order (first occurrence of key)
+         * - Empty array returns an empty Map
          */
         groupBy<K extends keyof T>(this: T[], key: K): Map<T[K], T[]>;
         groupBy<K>(this: T[], selector: (item: T) => K): Map<K, T[]>;
 
         /**
-         * Removes all falsy values (`false`, `null`, `0`, `""`, `undefined`, and `NaN`) from the array.
-         * @returns A new array with all falsy values removed.
+         * Removes all falsy values from the array.
+         * Removes: `false`, `null`, `0`, `""` (empty string), `undefined`, `NaN`.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to compact
+         * @returns {T[]} A new array with all falsy values removed
+         *
+         * @example
+         * [0, 1, false, 2, '', 3, null, undefined, NaN].compact();
+         * // [1, 2, 3]
+         *
+         * @remarks
+         * - Uses JavaScript's falsy value definition
+         * - Returns a new array (original is not modified)
          */
         compact(): T[];
 
         /**
-         * Enumerates the array into tuples [value, index].
+         * Enumerates the array into tuples of [value, index].
          * Similar to Python's enumerate but returns value first.
-         * @returns An array of [value, index] pairs.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to enumerate
+         * @returns {[T, number][]} An array of [value, index] tuples
+         *
+         * @example
+         * ['a', 'b', 'c'].enumerate();
+         * // [['a', 0], ['b', 1], ['c', 2]]
+         *
+         * @remarks
+         * - Value comes first (before index), unlike JavaScript's map callback
+         * - Index is always the enumeration index (0-based)
          */
         enumerate(): [T, number][];
 
         /**
-         * Returns a sorted copy of the array in ascending order.
-         * - If no callback is provided, all elements must be of type `number` or `string`.
-         * - If a callback is provided, it must return a `number` or `string` for each element.
-         * @param callback Optional function to extract the value to sort by.
-         * @throws {TypeError} If elements are not sortable or the callback returns an invalid type.
-         * @returns A new array sorted in ascending order.
+         * Returns a new sorted copy of the array in ascending order.
+         * Creates a new array without modifying the original.
+         *
+         * @template T The type of array elements
+         * @this {number[]|string[]|T[]} The array to sort
+         * @param {Selector<T, number|string>} [selector] - Optional function or property key to extract sortable value
+         * @returns {T[]} A new array sorted in ascending order
+         * @throws {TypeError} If elements are not sortable or selector returns invalid type
+         *
+         * @example
+         * [3, 1, 2].sortAsc(); // [1, 2, 3]
+         * ['c', 'a', 'b'].sortAsc(); // ['a', 'b', 'c']
+         * [{v: 2}, {v: 1}].sortAsc(x => x.v); // [{v: 1}, {v: 2}]
+         * [{v: 2}, {v: 1}].sortAsc('v'); // [{v: 1}, {v: 2}]
+         *
+         * @remarks
+         * - For primitive arrays, no selector needed (must be number or string)
+         * - Selectors must return number or string for comparison
+         * - Returns new array; does not mutate original
+         * - Empty arrays return empty array
          */
         sortAsc(this: number[] | string[]): T[];
         sortAsc<K extends keyof T>(this: T[], key: K): T[];
         sortAsc(this: T[], callback: (item: T) => number | string): T[];
 
         /**
-         * Returns a sorted copy of the array in descending order.
-         * - If no callback is provided, all elements must be of type `number` or `string`.
-         * - If a callback is provided, it must return a `number` or `string` for each element.
-         * @param callback Optional function to extract the value to sort by.
-         * @throws {TypeError} If elements are not sortable or the callback returns an invalid type.
-         * @returns A new array sorted in descending order.
+         * Returns a new sorted copy of the array in descending order.
+         * Creates a new array without modifying the original.
+         *
+         * @template T The type of array elements
+         * @this {number[]|string[]|T[]} The array to sort
+         * @param {Selector<T, number|string>} [selector] - Optional function or property key to extract sortable value
+         * @returns {T[]} A new array sorted in descending order
+         * @throws {TypeError} If elements are not sortable or selector returns invalid type
+         *
+         * @example
+         * [1, 3, 2].sortDesc(); // [3, 2, 1]
+         * ['a', 'c', 'b'].sortDesc(); // ['c', 'b', 'a']
+         * [{v: 1}, {v: 2}].sortDesc(x => x.v); // [{v: 2}, {v: 1}]
+         * [{v: 1}, {v: 2}].sortDesc('v'); // [{v: 2}, {v: 1}]
+         *
+         * @remarks
+         * - For primitive arrays, no selector needed (must be number or string)
+         * - Selectors must return number or string for comparison
+         * - Returns new array; does not mutate original
+         * - Empty arrays return empty array
          */
         sortDesc(this: number[] | string[]): T[];
         sortDesc<K extends keyof T>(this: T[], key: K): T[];
         sortDesc(this: T[], callback: (item: T) => number | string): T[];
 
         /**
-         * Swaps the values at two indices in the array.
-         * @param i First index
-         * @param j Second index
-         * @returns The array itself after swapping
+         * Swaps the elements at two indices within the array.
+         * Modifies the array in place and returns the array itself (for chaining).
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to modify
+         * @param {number} i - First index to swap
+         * @param {number} j - Second index to swap
+         * @returns {T[]} The modified array (same reference as this)
+         * @throws {TypeError} If indices are not integers
+         * @throws {RangeError} If any index is out of bounds (negative or >= length)
+         *
+         * @example
+         * const arr = [1, 2, 3];
+         * arr.swap(0, 2); // arr is now [3, 2, 1]
+         * arr === arr.swap(0, 2); // true (returns same array)
+         *
+         * @remarks
+         * - Does nothing if i === j
+         * - Modifies original array (not immutable)
+         * - Validates both indices are valid integers
          */
         swap(i: number, j: number): this;
 
         /**
-         * Returns a new array with the elements shuffled in random order.
-         * Uses the Fisher-Yates shuffle algorithm.
-         * @returns A new shuffled array.
+         * Returns a new array with elements shuffled randomly.
+         * Uses Fisher-Yates algorithm for uniform distribution.
+         * Does not modify the original array.
+         *
+         * @template T The type of array elements
+         * @this {T[]} The array to shuffle
+         * @returns {T[]} A new shuffled array
+         *
+         * @example
+         * const arr = [1, 2, 3, 4, 5];
+         * const shuffled = arr.shuffle();
+         * // shuffled might be [3, 1, 5, 2, 4] (order is random)
+         * arr; // [1, 2, 3, 4, 5] (unchanged)
+         *
+         * @remarks
+         * - Returns new array instance (original unchanged)
+         * - Uses Math.random() so results vary
+         * - Empty arrays return empty array
+         * - Fisher-Yates algorithm ensures unbiased distribution
          */
         shuffle(): T[];
 
         /**
-         * Converts an array to a Map.
-         * - If the array is of pairs [K, V], returns Map<K, V>.
-         * - If a key is provided, returns Map<T[K], T>.
-         * - If keySelector and valueSelector are provided, returns Map<K, V>.
-         * @param keyOrKeySelector Key name or key selector function.
-         * @param valueSelector Value selector function.
+         * Converts an array to a Map using keys and optionally values extracted from elements.
+         * Supports multiple input formats: pairs array, property key, or selector functions.
+         *
+         * @template T The type of array elements
+         * @template K The type of Map keys
+         * @template V The type of Map values
+         * @this {[K, V][]|T[]} The array to convert
+         * @param {K | (item: T) => K} [keySelector] - Property key or function to extract keys
+         * @param {(item: T) => V} [valueSelector] - Optional function to extract values
+         * @returns {Map<K, V>} A Map with extracted key-value pairs
+         *
+         * @example
+         * // From pairs
+         * [['a', 1], ['b', 2]].toMap(); // Map { 'a' => 1, 'b' => 2 }
+         *
+         * // Using property key
+         * [{id: 1, name: 'foo'}, {id: 2, name: 'bar'}].toMap('id');
+         * // Map { 1 => {id: 1, name: 'foo'}, 2 => {id: 2, name: 'bar'} }
+         *
+         * // Using selectors
+         * [{id: 1, name: 'foo'}].toMap(x => x.id, x => x.name);
+         * // Map { 1 => 'foo' }
+         *
+         * // Default (uses index)
+         * ['a', 'b'].toMap();
+         * // Map { 0 => 'a', 1 => 'b' }
+         *
+         * @remarks
+         * - For pairs array, no parameters needed
+         * - For objects, provide key as string or selector function
+         * - Value defaults to the entire element if not specified
+         * - Index is used as key if no keySelector provided
          */
         toMap<K, V>(this: [K, V][]): Map<K, V>;
         toMap<K extends keyof T>(this: T[], key: K): Map<T[K], T>;
@@ -129,14 +322,41 @@ declare global {
         toMap<K, V>(this: T[], keyCallback: (item: T) => K, valueCallback: (item: T) => V): Map<K, V>;
 
         /**
-         * Converts an array to an object.
-         * - If the array is of pairs [K, V], returns Record<K, V>.
-         * - If a key is provided, returns Record<T[K], T>.
-         * - If no key is provided, uses the array index as key.
-         * - If keySelector and valueSelector are provided, returns Record<K, V>.
+         * Converts an array to a plain JavaScript object using keys and optionally values extracted from elements.
+         * Leverages Map.prototype.toObject() internally for consistency and validation.
          *
-         * @param keyOrKeySelector Key name or key selector function.
-         * @param valueSelector Value selector function.
+         * @template T The type of array elements
+         * @template K Type of object keys (must be PropertyKey: string | number)
+         * @template V Type of object values
+         * @this {[K, V][]|T[]} The array to convert
+         * @param {K | keyof T | (item: T) => K} [keySelector] - Property key or function to extract keys
+         * @param {(item: T) => V} [valueSelector] - Optional function to extract values
+         * @returns {Record<K, V>} A plain object with array elements as properties
+         * @throws {TypeError} If any key is null, undefined, or not a valid PropertyKey (string/number)
+         *
+         * @example
+         * // From pairs
+         * [['a', 1], ['b', 2]].toObject(); // { a: 1, b: 2 }
+         *
+         * // Using property key
+         * [{id: 1, name: 'foo'}, {id: 2, name: 'bar'}].toObject('id');
+         * // { 1: {id: 1, name: 'foo'}, 2: {id: 2, name: 'bar'} }
+         *
+         * // Using selectors
+         * [{id: 1, name: 'foo'}].toObject(x => x.id, x => x.name);
+         * // { 1: 'foo' }
+         *
+         * // Default (uses index)
+         * ['a', 'b'].toObject();
+         * // { 0: 'a', 1: 'b' }
+         *
+         * @remarks
+         * - For pairs array, no parameters needed
+         * - For objects, provide key as string or selector function
+         * - Value defaults to the entire element if not specified
+         * - Index is used as key if no keySelector provided
+         * - Validates keys are valid PropertyKeys (not null/undefined)
+         * - Symbols are not supported in plain objects
          */
         toObject<K extends PropertyKey, V>(this: [K, V][]): Record<K, V>;
         toObject<K extends keyof T>(this: T[], key: K): Record<T[K] & PropertyKey, T>;

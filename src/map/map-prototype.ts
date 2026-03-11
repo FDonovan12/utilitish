@@ -6,11 +6,28 @@ export {};
 declare global {
     interface Map<K, V> {
         /**
-         * Converts the Map into a list or object, depending on the selected type.
-         * - `entries` (default): returns `[K, V][]`
-         * - `keys`: returns `K[]`
-         * - `values`: returns `V[]`
-         * - `object`: returns `{ [key: string]: V }`
+         * Converts the Map into a list or specific structure based on the selected conversion type.
+         * Supports multiple output formats: entries, keys, values, or a plain object.
+         *
+         * @template K The type of keys in the Map
+         * @template V The type of values in the Map
+         * @this {Map<K, V>} The Map to convert
+         * @param {string} [type='entries'] - The conversion type ('keys' | 'values' | 'entries' | 'object')
+         * @returns {any} Converted output as specified by the type parameter
+         * @throws {TypeError} If type is 'object' with non-compatible keys or if type is unknown
+         *
+         * @example
+         * const map = new Map([['a', 1], ['b', 2]]);
+         * map.toList(); // [['a', 1], ['b', 2]]
+         * map.toList('keys'); // ['a', 'b']
+         * map.toList('values'); // [1, 2]
+         * map.toList('object'); // { a: 1, b: 2 }
+         *
+         * @remarks
+         * - `entries` (default): Returns array of [K, V] pairs
+         * - `keys`: Returns array of all keys
+         * - `values`: Returns array of all values
+         * - `object`: Returns Record with string keys (requires keys to be string/number/symbol)
          */
         toList(type: 'keys'): K[];
         toList(type: 'values'): V[];
@@ -19,27 +36,63 @@ declare global {
         toList(): [K, V][];
 
         /**
-         * Converts a Map to a plain object.
-         * - Each key/value pair in the Map becomes a property/value in the object.
-         * - Keys must be compatible with `PropertyKey` (string | number | symbol).
+         * Converts a Map to a plain JavaScript object.
+         * Each key/value pair in the Map becomes a property/value in the resulting object.
+         * Validates that all keys are valid PropertyKey types.
+         *
+         * @template K Type of keys (must extend PropertyKey: string | number | symbol)
+         * @template V Type of values in the Map
+         * @this {Map<K, V>} The Map to convert
+         * @returns {Record<K, V>} A plain object with Map entries as properties
+         * @throws {TypeError} If any key is null, undefined, or not a PropertyKey type
          *
          * @example
-         * const map = new Map<number, string>([[1, 'a'], [2, 'b']]);
-         * map.toObject(); // { 1: 'a', 2: 'b' }
+         * const map = new Map<string, number>([['a', 1], ['b', 2]]);
+         * map.toObject(); // { a: 1, b: 2 }
+         *
+         * const numKeyMap = new Map<number, string>([[1, 'one'], [2, 'two']]);
+         * numKeyMap.toObject(); // { 1: 'one', 2: 'two' }
+         *
+         * @remarks
+         * - Provides validation and error handling for property key compatibility
+         * - Supports string, number, and symbol keys
+         * - Returns a new object instance each time (no modification to original)
          */
         toObject<K extends PropertyKey, V>(this: Map<K, V>): Record<K, V>;
 
         /**
-         * Ensures that the value for the given key is an array.
-         * If the key does not exist, it sets it to an empty array.
+         * Ensures that the Map has an entry for the given key with an array as value.
+         * If the key doesn't exist, initializes it with an empty array.
+         * Validates that the existing value (if any) is indeed an array.
          *
-         * @param key - The key to look up in the map.
-         * @returns The array associated with the key.
+         * @template K Type of keys in the Map
+         * @template L The array type stored as values (extends Array<any>)
+         * @this {Map<K, L>} The Map where values must be arrays
+         * @param {K} key - The key to look up or initialize
+         * @returns {L} The array associated with the key (either existing or newly created)
+         * @throws {TypeError} If key is null/undefined or if the existing value is not an array
+         *
+         * @example
+         * const map = new Map<string, number[]>();
+         * const arr1 = map.ensureArray('items'); // Returns [], and ['items'] => [] is set in map
+         * arr1.push(42);
+         *
+         * const arr2 = map.ensureArray('items'); // Returns same array with [42]
+         * arr1 === arr2; // true (same reference)
+         *
+         * @remarks
+         * - Modifies the Map in place (lazy initialization pattern)
+         * - Useful for Maps that accumulate items by key
+         * - Throws if the existing value for a key is not an array
+         * - Key must not be null or undefined
          */
         ensureArray<L extends Array<any>>(this: Map<K, L>, key: K): L;
     }
 }
 
+/**
+ * @see Map.prototype.toList
+ */
 defineIfNotExists(Map.prototype, 'toList', function <
     K,
     V,
@@ -74,10 +127,16 @@ defineIfNotExists(Map.prototype, 'toList', function <
     }
 });
 
+/**
+ * @see Map.prototype.toObject
+ */
 defineIfNotExists(Map.prototype, 'toObject', function <K extends PropertyKey, V>(this: Map<K, V>): Record<K, V> {
     return mapToObject(this);
 });
 
+/**
+ * @see Map.prototype.ensureArray
+ */
 defineIfNotExists(Map.prototype, 'ensureArray', function <K, V>(this: Map<K, V[]>, key: K): V[] {
     if (key === null || key === undefined) {
         throw new TypeError('Key cannot be null or undefined');
