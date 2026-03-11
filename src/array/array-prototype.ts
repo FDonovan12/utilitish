@@ -1,5 +1,5 @@
 import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils/core.utils';
-import { mapToObject } from '../utils/logic.utils';
+import { mapToObject, sortBy } from '../utils/logic.utils';
 
 export {};
 
@@ -53,8 +53,7 @@ declare global {
          * - Returns 0 for empty arrays regardless of type
          */
         sum(this: number[]): number;
-        sum<K extends keyof T>(this: T[], key: K): number;
-        sum(this: T[], callback: (item: T) => number): number;
+        sum(this: T[], selector?: Selector<T, number>): number;
 
         /**
          * Returns a new array with only unique elements based on strict equality (===).
@@ -117,8 +116,7 @@ declare global {
          * - For object arrays, use property key string or callback function
          */
         average(this: number[]): number;
-        average<K extends keyof T>(this: T[], key: K): number;
-        average(this: T[], callback: (item: T) => number): number;
+        average(this: T[], selector: Selector<T, number>): number;
 
         /**
          * Groups array elements into a Map based on a key returned by the selector.
@@ -142,8 +140,7 @@ declare global {
          * - Order of groups in Map matches insertion order (first occurrence of key)
          * - Empty array returns an empty Map
          */
-        groupBy<K extends keyof T>(this: T[], key: K): Map<T[K], T[]>;
-        groupBy<K>(this: T[], selector: (item: T) => K): Map<K, T[]>;
+        groupBy<K>(this: T[], selector: Selector<T, K>): Map<K, T[]>;
 
         /**
          * Removes all falsy values from the array.
@@ -203,9 +200,7 @@ declare global {
          * - Returns new array; does not mutate original
          * - Empty arrays return empty array
          */
-        sortAsc(this: number[] | string[]): T[];
-        sortAsc<K extends keyof T>(this: T[], key: K): T[];
-        sortAsc(this: T[], callback: (item: T) => number | string): T[];
+        sortAsc(this: T[], selector?: Selector<T, number | string>): T[];
 
         /**
          * Returns a new sorted copy of the array in descending order.
@@ -229,9 +224,7 @@ declare global {
          * - Returns new array; does not mutate original
          * - Empty arrays return empty array
          */
-        sortDesc(this: number[] | string[]): T[];
-        sortDesc<K extends keyof T>(this: T[], key: K): T[];
-        sortDesc(this: T[], callback: (item: T) => number | string): T[];
+        sortDesc(this: T[], selector?: Selector<T, number | string>): T[];
 
         /**
          * Swaps the elements at two indices within the array.
@@ -315,11 +308,7 @@ declare global {
          * - Index is used as key if no keySelector provided
          */
         toMap<K, V>(this: [K, V][]): Map<K, V>;
-        toMap<K extends keyof T>(this: T[], key: K): Map<T[K], T>;
-        toMap<K extends keyof T, V>(this: T[], key: K, valueCallback: (item: T) => V): Map<T[K], V>;
-        toMap<K, V>(): Map<number, T>;
-        toMap<K, V>(this: T[], keyCallback: (item: T) => K): Map<K, T>;
-        toMap<K, V>(this: T[], keyCallback: (item: T) => K, valueCallback: (item: T) => V): Map<K, V>;
+        toMap<K, V>(this: T[], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Map<K | number, V | T>;
 
         /**
          * Converts an array to a plain JavaScript object using keys and optionally values extracted from elements.
@@ -359,36 +348,66 @@ declare global {
          * - Symbols are not supported in plain objects
          */
         toObject<K extends PropertyKey, V>(this: [K, V][]): Record<K, V>;
-        toObject<K extends keyof T>(this: T[], key: K): Record<T[K] & PropertyKey, T>;
-        toObject<K extends keyof T, V>(this: T[], key: K, valueCallback: (item: T) => V): Record<T[K] & PropertyKey, V>;
-        toObject<K, V>(this: T[]): Record<number, T>;
-        toObject<K extends PropertyKey>(this: T[], keyCallback: (item: T) => K): Record<K, T>;
         toObject<K extends PropertyKey, V>(
             this: T[],
-            keyCallback: (item: T) => K,
-            valueCallback: (item: T) => V,
-        ): Record<K, V>;
+            keySelector?: Selector<T, K>,
+            valueSelector?: Selector<T, V>,
+        ): Record<K | number, V | T>;
 
         /**
          * Returns a Set containing the unique elements of the array.
-         * If a selector is provided, it can be a function or a string key.
-         * - If a function, it is called for each element.
-         * - If a string, it is used as a property key of each element.
-         * @param selector Optional function or string key to select the value to store in the Set.
-         * @returns A Set of unique elements or selected values.
+         * Optionally applies a selector function or property key to extract values for the Set.
+         *
+         * @template T The type of array elements
+         * @template K The type of selected values for the Set
+         * @this {T[]} The array to convert
+         * @param {Selector<T, K>} [selector] - Optional property key or function to select values
+         * @returns {Set<T | K>} A Set of unique elements or selected values
+         *
+         * @example
+         * [1, 2, 2, 3].toSet(); // Set { 1, 2, 3 }
+         *
+         * [{id: 1}, {id: 2}, {id: 1}].toSet(x => x.id);
+         * // Set { 1, 2 }
+         *
+         * [{id: 1}, {id: 2}].toSet('id');
+         * // Set { 1, 2 }
+         *
+         * @remarks
+         * - Without selector, stores the entire element in the Set
+         * - With selector, stores the extracted value instead
+         * - Uses Set's built-in uniqueness (based on === equality)
+         * - Empty array returns empty Set
          */
-        toSet(): Set<T>;
-        toSet<K extends keyof T>(this: T[], key: K): Set<T[K]>;
-        toSet<K>(this: T[], selector: (item: T) => K): Set<K>;
+        toSet<K>(this: T[], selector?: Selector<T, K>): Set<T | K>;
 
         /**
-         * Returns a Map where the keys are the result of the selector (function or string key) and the values are the counts of each key.
-         * @param selector Function or string key to select the key for counting.
-         * @returns A Map with the count of each key.
+         * Groups array elements by a key and counts the occurrences of each key.
+         * Returns a Map where keys map to their occurrence counts.
+         *
+         * @template T The type of array elements
+         * @template K The type of grouping key
+         * @this {T[]} The array to count
+         * @param {Selector<T, K>} [selector] - Optional property key or function to extract grouping key
+         * @returns {Map<T | K, number>} A Map where keys map to their occurrence counts
+         *
+         * @example
+         * ['a', 'b', 'a', 'c', 'b', 'a'].countBy();
+         * // Map { 'a' => 3, 'b' => 2, 'c' => 1 }
+         *
+         * [{type: 'x'}, {type: 'y'}, {type: 'x'}].countBy(x => x.type);
+         * // Map { 'x' => 2, 'y' => 1 }
+         *
+         * [{type: 'x'}, {type: 'y'}].countBy('type');
+         * // Map { 'x' => 1, 'y' => 1 }
+         *
+         * @remarks
+         * - Without selector, counts entire elements
+         * - With selector, counts extracted keys
+         * - Uses === equality for counting
+         * - Empty array returns empty Map
          */
-        countBy(): Map<T, number>;
-        countBy<K extends keyof T>(this: T[], key: K): Map<T[K], number>;
-        countBy<K>(this: T[], selector: (item: T) => K): Map<K, number>;
+        countBy<K>(this: T[], selector?: Selector<T, K>): Map<T | K, number>;
     }
 }
 
@@ -406,7 +425,7 @@ defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], selector?: Sel
     if (this.every((item) => typeof getValue(item) === 'number')) {
         return this.reduce((acc: number, item: T) => getValue(item) + acc, 0);
     }
-    throw new TypeError('Array.prototype.sum() requires a callback who return a number unless array is number[]');
+    throw new TypeError('Array.prototype.sum() requires a selector who return a number unless array is number[]');
 });
 
 defineIfNotExists(Array.prototype, 'unique', function <T>(this: T[]): T[] {
@@ -430,7 +449,7 @@ defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], selector?:
     if (this.every((item) => typeof getValue(item) === 'number')) {
         return this.reduce((acc: number, item: T) => getValue(item) + acc, 0) / this.length;
     }
-    throw new TypeError('Array.prototype.average() requires a callback who return a number unless array is number[]');
+    throw new TypeError('Array.prototype.average() requires a selector who return a number unless array is number[]');
 });
 
 defineIfNotExists(Array.prototype, 'groupBy', function <T, K>(this: T[], selector?: Selector<T, K>): Map<K, T[]> {
@@ -471,7 +490,7 @@ defineIfNotExists(Array.prototype, 'sortBy', function <
         const valB = getValue(b);
 
         if (!isNumberOrString(valA) || !isNumberOrString(valB)) {
-            throw new TypeError('Callback must return number or string');
+            throw new TypeError('Selector must return number or string');
         }
 
         if (valA > valB) return direction === 'asc' ? 1 : -1;
@@ -562,26 +581,3 @@ defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selecto
     }
     return map;
 });
-
-function sortBy<T>(arr: T[], direction: 'asc' | 'desc', selector?: Selector<T, number | string>): T[] {
-    if (arr.length === 0) return arr.slice();
-
-    const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
-
-    if (!selector && !arr.every((item) => isNumberOrString(item))) {
-        throw new TypeError('Array elements must be number or string if no selector is provided');
-    }
-
-    return arr.slice().sort((a, b) => {
-        const valA = getValue(a);
-        const valB = getValue(b);
-
-        if (!isNumberOrString(valA) || !isNumberOrString(valB)) {
-            throw new TypeError('Callback must return number or string');
-        }
-
-        if (valA > valB) return direction === 'asc' ? 1 : -1;
-        if (valA < valB) return direction === 'asc' ? -1 : 1;
-        return 0;
-    });
-}

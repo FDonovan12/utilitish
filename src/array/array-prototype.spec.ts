@@ -1,86 +1,125 @@
 import './array-prototype';
 
-describe('Array prototype extensions', () => {
-    describe('first', () => {
-        it('should return the first element or undefined', () => {
-            expect([1, 2, 3].first()).toBe(1);
-            expect([].first()).toBeUndefined();
+describe('Array.prototype', () => {
+    describe('first()', () => {
+        it.each([
+            { input: [1, 2, 3], expected: 1 },
+            { input: [], expected: undefined },
+        ])('should return $expected when array is $input', ({ input, expected }) => {
+            expect(input.first()).toBe(expected);
         });
     });
 
-    describe('last', () => {
-        it('should return the last element or undefined', () => {
-            expect([1, 2, 3].last()).toBe(3);
-            expect([].last()).toBeUndefined();
+    describe('last()', () => {
+        it.each([
+            { input: [1, 2, 3], expected: 3 },
+            { input: [], expected: undefined },
+        ])('should return $expected when array is $input', ({ input, expected }) => {
+            expect(input.last()).toBe(expected);
         });
     });
 
-    describe('sum', () => {
-        it('should work for number[] without callback', () => {
-            expect([1, 2, 3].sum()).toBe(6);
+    describe('sum()', () => {
+        describe('with number arrays', () => {
+            it.each([
+                { input: [1, 2, 3], expected: 6 },
+                { input: [], expected: 0 },
+                { input: [0], expected: 0 },
+            ])('should return $expected when array is $input', ({ input, expected }) => {
+                expect(input.sum()).toBe(expected);
+            });
         });
-        it('should work with callback', () => {
-            const items = [{ x: 1 }, { x: 2 }];
-            expect(items.sum((item) => item.x)).toBe(3);
+
+        describe('with selector function', () => {
+            it('should return the sum when using selector function', () => {
+                const items = [{ x: 1 }, { x: 2 }];
+                expect(items.sum((item) => item.x)).toBe(3);
+            });
         });
-        it('should work with callback', () => {
-            const items = [{ x: 1 }, { x: 2 }];
-            expect(items.sum('x')).toBe(3);
+
+        describe('with selector string key', () => {
+            it('should return the sum when using property key', () => {
+                const items = [{ x: 1 }, { x: 2 }];
+                expect(items.sum('x')).toBe(3);
+            });
         });
-        it('should throw without callback', () => {
-            const items = [{ x: 2 }, { x: 4 }] as any;
-            expect(() => items.sum()).toThrow(TypeError);
-        });
-        it('should return 0 for empty array', () => {
-            expect([].sum()).toBe(0);
+
+        describe('error handling', () => {
+            it('should throw TypeError when called on non-number array without selector', () => {
+                const items = [{ x: 2 }, { x: 4 }] as any;
+                expect(() => items.sum()).toThrow(TypeError);
+            });
         });
     });
 
-    describe('average', () => {
-        it('should work for number[] without callback', () => {
-            expect([2, 4, 6].average()).toBe(4);
+    describe('average()', () => {
+        describe('with number arrays', () => {
+            it.each([
+                { input: [2, 4, 6], expected: 4 },
+                { input: [], expected: 0 },
+            ])('should return $expected when array is $input', ({ input, expected }) => {
+                expect(input.average()).toBe(expected);
+            });
         });
-        it('should work with callback', () => {
-            const items = [{ x: 2 }, { x: 4 }];
-            expect(items.average((item) => item.x)).toBe(3);
+
+        describe('with selector function', () => {
+            it('should return the average when using selector function', () => {
+                const items = [{ x: 2 }, { x: 4 }];
+                expect(items.average((item) => item.x)).toBe(3);
+            });
         });
-        it('should work with key', () => {
-            const items = [{ x: 2 }, { x: 4 }];
-            expect(items.average('x')).toBe(3);
+
+        describe('with selector string key', () => {
+            it('should return the average when using property key', () => {
+                const items = [{ x: 2 }, { x: 4 }];
+                expect(items.average('x')).toBe(3);
+            });
         });
-        it('should throw without callback', () => {
-            const items = [{ x: 2 }, { x: 4 }] as any;
-            expect(() => items.average()).toThrow(TypeError);
-        });
-        it('should return 0 for empty array', () => {
-            expect([].average()).toBe(0);
+
+        describe('error handling', () => {
+            it('should throw TypeError when called on non-number array without selector', () => {
+                const items = [{ x: 2 }, { x: 4 }] as any;
+                expect(() => items.average()).toThrow(TypeError);
+            });
         });
     });
 
-    describe('unique', () => {
+    describe('unique()', () => {
         it('should return array with unique values', () => {
             expect([1, 1, 2, 2, 3].unique()).toEqual([1, 2, 3]);
         });
     });
 
-    describe('chunk', () => {
-        it('should split array into chunks', () => {
-            expect([1, 2, 3, 4].chunk(2)).toEqual([
-                [1, 2],
-                [3, 4],
-            ]);
-            expect([1, 2, 3].chunk(2)).toEqual([[1, 2], [3]]);
+    describe('chunk()', () => {
+        describe('with valid size', () => {
+            it.each([
+                {
+                    input: [1, 2, 3, 4],
+                    size: 2,
+                    expected: [
+                        [1, 2],
+                        [3, 4],
+                    ],
+                },
+                { input: [1, 2, 3], size: 2, expected: [[1, 2], [3]] },
+            ])('should split array into chunks when size is $size', ({ input, size, expected }) => {
+                expect(input.chunk(size)).toEqual(expected);
+            });
         });
-        it('should throw if size is not a positive integer', () => {
-            expect(() => [1, 2, 3].chunk(0)).toThrow(TypeError);
-            expect(() => [1, 2, 3].chunk(-1)).toThrow(TypeError);
-            expect(() => [1, 2, 3].chunk(1.5)).toThrow(TypeError);
-            expect(() => [1, 2, 3].chunk('a' as any)).toThrow(TypeError);
+
+        describe('error handling', () => {
+            it('should throw TypeError when size is not a positive integer', () => {
+                const arr = [1, 2, 3];
+                expect(() => arr.chunk(0)).toThrow(TypeError);
+                expect(() => arr.chunk(-1)).toThrow(TypeError);
+                expect(() => arr.chunk(1.5)).toThrow(TypeError);
+                expect(() => arr.chunk('a' as any)).toThrow(TypeError);
+            });
         });
     });
 
-    describe('Array.prototype.groupBy', () => {
-        it('groups by a property key (string)', () => {
+    describe('groupBy()', () => {
+        it('should group by property key', () => {
             const arr = [
                 { type: 'a', value: 1 },
                 { type: 'b', value: 2 },
@@ -95,7 +134,7 @@ describe('Array prototype extensions', () => {
             expect(map.get('b')).toEqual([{ type: 'b', value: 2 }]);
         });
 
-        it('groups by a selector function', () => {
+        it('should group by selector function', () => {
             const arr = [1, 2, 3, 4, 5, 6];
             const map = arr.groupBy((x) => (x % 2 === 0 ? 'even' : 'odd'));
             expect(map instanceof Map).toBe(true);
@@ -103,274 +142,338 @@ describe('Array prototype extensions', () => {
             expect(map.get('odd')).toEqual([1, 3, 5]);
         });
 
-        it('returns an empty Map for an empty array', () => {
+        it('should return an empty Map when array is empty', () => {
             expect([].groupBy((x) => x)).toEqual(new Map());
         });
     });
 
-    describe('compact', () => {
-        it('should remove falsy values', () => {
+    describe('compact()', () => {
+        it('should remove all falsy values', () => {
             expect([0, 1, false, 2, '', 3, null].compact()).toEqual([1, 2, 3]);
         });
     });
 
-    describe('swap', () => {
-        it('should swap two elements in the array', () => {
-            const arr = [1, 2, 3];
-            arr.swap(0, 2);
-            expect(arr).toEqual([3, 2, 1]);
-        });
-        it('should do nothing if indices are the same', () => {
-            const arr = [1, 2, 3];
-            arr.swap(1, 1);
-            expect(arr).toEqual([1, 2, 3]);
-        });
-        it('should throw if an index is out of bounds', () => {
-            const arr = [1, 2, 3];
-            expect(() => arr.swap(-1, 2)).toThrow(RangeError);
-            expect(() => arr.swap(0, 3)).toThrow(RangeError);
-        });
-        it('should throw if indices are not integers', () => {
-            const arr = [1, 2, 3];
-            expect(() => arr.swap(0.5, 2)).toThrow(TypeError);
-            expect(() => arr.swap(0, 'a' as any)).toThrow(TypeError);
+    describe('enumerate()', () => {
+        it('should return array of [value, index] tuples', () => {
+            const result = ['a', 'b', 'c'].enumerate();
+            expect(result).toEqual([
+                ['a', 0],
+                ['b', 1],
+                ['c', 2],
+            ]);
         });
     });
 
-    describe('Array.prototype.sortAsc', () => {
-        it('sorts a number array in ascending order', () => {
-            expect([3, 1, 2].sortAsc()).toEqual([1, 2, 3]);
+    describe('sortAsc()', () => {
+        describe('with primitive arrays', () => {
+            it('should sort numbers in ascending order', () => {
+                expect([3, 1, 2].sortAsc()).toEqual([1, 2, 3]);
+            });
+
+            it('should sort strings in ascending order', () => {
+                expect(['b', 'a', 'c'].sortAsc()).toEqual(['a', 'b', 'c']);
+            });
+
+            it('should return empty array when empty', () => {
+                expect([].sortAsc()).toEqual([]);
+            });
         });
-        it('sorts a string array in ascending order', () => {
-            expect(['b', 'a', 'c'].sortAsc()).toEqual(['a', 'b', 'c']);
+
+        describe('with selector function', () => {
+            it('should sort using selector function', () => {
+                const arr = [{ v: 2 }, { v: 1 }];
+                expect(arr.sortAsc((x) => x.v)).toEqual([{ v: 1 }, { v: 2 }]);
+            });
         });
-        it('sorts using a callback', () => {
-            const arr = [{ v: 2 }, { v: 1 }];
-            expect(arr.sortAsc((x) => x.v)).toEqual([{ v: 1 }, { v: 2 }]);
+
+        describe('with selector string key', () => {
+            it('should sort using property key', () => {
+                const arr = [{ v: 2 }, { v: 1 }];
+                expect(arr.sortAsc('v')).toEqual([{ v: 1 }, { v: 2 }]);
+            });
         });
-        it('sorts using a key', () => {
-            const arr = [{ v: 2 }, { v: 1 }];
-            expect(arr.sortAsc('v')).toEqual([{ v: 1 }, { v: 2 }]);
-        });
-        it('returns [] for an empty array', () => {
-            expect([].sortAsc()).toEqual([]);
-        });
-        it('throws if callback does not return a sortable type', () => {
-            expect(() => [{ v: {} }, { v: {} }].sortAsc((x) => x.v as any)).toThrow(TypeError);
-        });
-        it('throws if elements are not sortable without callback', () => {
-            expect(() => [{ v: 1 } as any].sortAsc()).toThrow(TypeError);
+
+        describe('error handling', () => {
+            it('should throw TypeError when selector returns non-sortable type', () => {
+                expect(() => [{ v: {} }, { v: {} }].sortAsc((x) => x.v as any)).toThrow(TypeError);
+            });
+
+            it('should throw TypeError when elements are not sortable without selector', () => {
+                expect(() => [{ v: 1 } as any].sortAsc()).toThrow(TypeError);
+            });
         });
     });
 
-    describe('Array.prototype.sortDesc', () => {
-        it('sorts a number array in descending order', () => {
-            expect([1, 3, 2, 4].sortDesc()).toEqual([4, 3, 2, 1]);
+    describe('sortDesc()', () => {
+        describe('with primitive arrays', () => {
+            it('should sort numbers in descending order', () => {
+                expect([1, 3, 2, 4].sortDesc()).toEqual([4, 3, 2, 1]);
+            });
+
+            it('should sort strings in descending order', () => {
+                expect(['b', 'a', 'c'].sortDesc()).toEqual(['c', 'b', 'a']);
+            });
+
+            it('should return empty array when empty', () => {
+                expect([].sortDesc()).toEqual([]);
+            });
         });
-        it('sorts a string array in descending order', () => {
-            expect(['b', 'a', 'c'].sortDesc()).toEqual(['c', 'b', 'a']);
+
+        describe('with selector function', () => {
+            it('should sort using selector function', () => {
+                const arr = [{ v: 1 }, { v: 2 }];
+                expect(arr.sortDesc((x) => x.v)).toEqual([{ v: 2 }, { v: 1 }]);
+            });
         });
-        it('sorts using a callback', () => {
-            const arr = [{ v: 1 }, { v: 2 }];
-            expect(arr.sortDesc((x) => x.v)).toEqual([{ v: 2 }, { v: 1 }]);
+
+        describe('with selector string key', () => {
+            it('should sort using property key', () => {
+                const arr = [{ v: 1 }, { v: 2 }];
+                expect(arr.sortDesc('v')).toEqual([{ v: 2 }, { v: 1 }]);
+            });
         });
-        it('sorts using a key', () => {
-            const arr = [{ v: 1 }, { v: 2 }];
-            expect(arr.sortDesc('v')).toEqual([{ v: 2 }, { v: 1 }]);
-        });
-        it('returns [] for an empty array', () => {
-            expect([].sortDesc()).toEqual([]);
-        });
-        it('throws if callback does not return a sortable type', () => {
-            expect(() => [{ v: {} }, { v: {} }].sortDesc((x) => x.v as any)).toThrow(TypeError);
-        });
-        it('throws if elements are not sortable without callback', () => {
-            expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
+
+        describe('error handling', () => {
+            it('should throw TypeError when selector returns non-sortable type', () => {
+                expect(() => [{ v: {} }, { v: {} }].sortDesc((x) => x.v as any)).toThrow(TypeError);
+            });
+
+            it('should throw TypeError when elements are not sortable without selector', () => {
+                expect(() => [{ v: 1 } as any].sortDesc()).toThrow(TypeError);
+            });
         });
     });
 
-    describe('Array.prototype.shuffle', () => {
-        it('returns a new array with the same elements in any order', () => {
+    describe('swap()', () => {
+        describe('with valid indices', () => {
+            it('should swap two elements at given indices', () => {
+                const arr = [1, 2, 3];
+                arr.swap(0, 2);
+                expect(arr).toEqual([3, 2, 1]);
+            });
+
+            it('should do nothing when indices are identical', () => {
+                const arr = [1, 2, 3];
+                arr.swap(1, 1);
+                expect(arr).toEqual([1, 2, 3]);
+            });
+        });
+
+        describe('error handling', () => {
+            it('should throw RangeError when index is out of bounds', () => {
+                const arr = [1, 2, 3];
+                expect(() => arr.swap(-1, 2)).toThrow(RangeError);
+                expect(() => arr.swap(0, 3)).toThrow(RangeError);
+            });
+
+            it('should throw TypeError when indices are not integers', () => {
+                const arr = [1, 2, 3];
+                expect(() => arr.swap(0.5, 2)).toThrow(TypeError);
+                expect(() => arr.swap(0, 'a' as any)).toThrow(TypeError);
+            });
+        });
+    });
+
+    describe('shuffle()', () => {
+        it('should return a new array with same elements in different order', () => {
             const arr = [1, 2, 3, 4, 5];
             const shuffled = arr.shuffle();
             expect(shuffled).toHaveLength(arr.length);
             expect(shuffled.sort()).toEqual(arr.sort());
-            // Not a strict test for randomness, but should not always be equal
         });
 
-        it('does not mutate the original array', () => {
+        it('should not mutate the original array', () => {
             const arr = [1, 2, 3];
             const copy = arr.slice();
             arr.shuffle();
             expect(arr).toEqual(copy);
         });
 
-        it('returns an empty array when called on an empty array', () => {
-            expect([].shuffle()).toEqual([]);
-        });
-
-        it('returns a new array instance', () => {
+        it('should return a new array instance', () => {
             const arr = [1, 2, 3];
             const shuffled = arr.shuffle();
             expect(shuffled).not.toBe(arr);
         });
-    });
 
-    describe('Array.prototype.toMap', () => {
-        it('converts array of pairs to Map', () => {
-            const arr: [string, number][] = [
-                ['a', 1],
-                ['b', 2],
-            ];
-            const map = arr.toMap();
-            expect(map instanceof Map).toBe(true);
-            expect(map.size).toBe(2);
-            expect(map.get('a')).toBe(1);
-            expect(map.get('b')).toBe(2);
-        });
-
-        it('converts array of objects to Map using key string', () => {
-            const arr = [
-                { id: 1, name: 'foo' },
-                { id: 2, name: 'bar' },
-            ];
-            const map = arr.toMap('id');
-            expect(map instanceof Map).toBe(true);
-            expect(map.size).toBe(2);
-            expect(map.get(1)).toEqual({ id: 1, name: 'foo' });
-            expect(map.get(2)).toEqual({ id: 2, name: 'bar' });
-        });
-
-        it('converts array of objects to Map using key and value selectors', () => {
-            const arr = [
-                { id: 1, name: 'foo' },
-                { id: 2, name: 'bar' },
-            ];
-            const map = arr.toMap(
-                (x) => x.id,
-                (x) => x.name,
-            );
-            expect(map instanceof Map).toBe(true);
-            expect(map.size).toBe(2);
-            expect(map.get(1)).toBe('foo');
-            expect(map.get(2)).toBe('bar');
-        });
-
-        it('converts array of objects to Map using key string and value selectors', () => {
-            const arr = [
-                { id: 1, name: 'foo' },
-                { id: 2, name: 'bar' },
-            ];
-            const map = arr.toMap('id', (x) => x.name);
-            expect(map instanceof Map).toBe(true);
-            expect(map.size).toBe(2);
-            expect(map.get(1)).toBe('foo');
-            expect(map.get(2)).toBe('bar');
-        });
-
-        it('converts array of objects to Map using key without value selectors', () => {
-            const arr = [
-                { id: 1, name: 'foo' },
-                { id: 2, name: 'bar' },
-            ];
-            const map = arr.toMap((x) => x.id);
-
-            expect(map instanceof Map).toBe(true);
-            expect(map.size).toBe(2);
-            expect(map.get(1)).toEqual({ id: 1, name: 'foo' });
-            expect(map.get(2)).toEqual({ id: 2, name: 'bar' });
-        });
-
-        it('converts array of objects to Map using no callback', () => {
-            const arr = [
-                { id: 1, name: 'foo' },
-                { id: 2, name: 'bar' },
-            ];
-            const map = arr.toMap();
-
-            expect(map instanceof Map).toBe(true);
-            expect(map.size).toBe(2);
-            expect(map.get(0)).toEqual({ id: 1, name: 'foo' });
-            expect(map.get(1)).toEqual({ id: 2, name: 'bar' });
-        });
-
-        it('throws if arguments are invalid', () => {
-            // expect(() => [{ id: 1 }].toMap()).toThrow(Error);
-            expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+        it('should return an empty array when called on empty array', () => {
+            expect([].shuffle()).toEqual([]);
         });
     });
 
-    describe('Array.prototype.toSet', () => {
-        it('returns a Set of unique elements', () => {
-            expect([1, 2, 2, 3].toSet()).toEqual(new Set([1, 2, 3]));
-        });
-        it('returns a Set of selected values', () => {
-            const arr = [{ id: 1 }, { id: 2 }, { id: 1 }];
-            expect(arr.toSet((x) => x.id)).toEqual(new Set([1, 2]));
-        });
-        it('returns a Set of key values', () => {
-            const arr = [{ id: 1 }, { id: 2 }, { id: 1 }];
-            expect(arr.toSet('id')).toEqual(new Set([1, 2]));
-        });
-        it('returns an empty Set for an empty array', () => {
-            expect([].toSet()).toEqual(new Set());
-        });
-    });
-
-    describe('Array.prototype.countBy', () => {
-        it('counts elements by selector', () => {
-            const arr = ['a', 'b', 'a', 'c', 'b', 'a'];
-            expect(arr.countBy((x) => x)).toEqual(
-                new Map([
-                    ['a', 3],
+    describe('toMap()', () => {
+        describe('with pairs array', () => {
+            it('should convert array of pairs to Map', () => {
+                const arr: [string, number][] = [
+                    ['a', 1],
                     ['b', 2],
-                    ['c', 1],
-                ]),
-            );
+                ];
+                const map = arr.toMap();
+                expect(map instanceof Map).toBe(true);
+                expect(map.size).toBe(2);
+                expect(map.get('a')).toBe(1);
+                expect(map.get('b')).toBe(2);
+            });
         });
-        it('counts elements whithout selector', () => {
-            const arr = ['a', 'b', 'a', 'c', 'b', 'a'];
-            expect(arr.countBy()).toEqual(
-                new Map([
-                    ['a', 3],
-                    ['b', 2],
-                    ['c', 1],
-                ]),
-            );
+
+        describe('with selector string key and no value selector', () => {
+            it('should convert array of objects using property key', () => {
+                const arr = [
+                    { id: 1, name: 'foo' },
+                    { id: 2, name: 'bar' },
+                ];
+                const map = arr.toMap('id');
+                expect(map instanceof Map).toBe(true);
+                expect(map.size).toBe(2);
+                expect(map.get(1)).toEqual({ id: 1, name: 'foo' });
+                expect(map.get(2)).toEqual({ id: 2, name: 'bar' });
+            });
         });
-        it('counts objects by property', () => {
-            const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
-            expect(arr.countBy((x) => x.type)).toEqual(
-                new Map([
-                    ['x', 2],
-                    ['y', 1],
-                ]),
-            );
+
+        describe('with selector functions', () => {
+            it('should convert array using key and value selectors', () => {
+                const arr = [
+                    { id: 1, name: 'foo' },
+                    { id: 2, name: 'bar' },
+                ];
+                const map = arr.toMap(
+                    (x) => x.id,
+                    (x) => x.name,
+                );
+                expect(map instanceof Map).toBe(true);
+                expect(map.size).toBe(2);
+                expect(map.get(1)).toBe('foo');
+                expect(map.get(2)).toBe('bar');
+            });
+
+            it('should convert array using key selector only', () => {
+                const arr = [
+                    { id: 1, name: 'foo' },
+                    { id: 2, name: 'bar' },
+                ];
+                const map = arr.toMap((x) => x.id);
+                expect(map instanceof Map).toBe(true);
+                expect(map.size).toBe(2);
+                expect(map.get(1)).toEqual({ id: 1, name: 'foo' });
+                expect(map.get(2)).toEqual({ id: 2, name: 'bar' });
+            });
+
+            it('should convert array using string key and value selector', () => {
+                const arr = [
+                    { id: 1, name: 'foo' },
+                    { id: 2, name: 'bar' },
+                ];
+                const map = arr.toMap('id', (x) => x.name);
+                expect(map instanceof Map).toBe(true);
+                expect(map.size).toBe(2);
+                expect(map.get(1)).toBe('foo');
+                expect(map.get(2)).toBe('bar');
+            });
         });
-        it('counts objects by property using a string key', () => {
-            const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
-            expect(arr.countBy('type')).toEqual(
-                new Map([
-                    ['x', 2],
-                    ['y', 1],
-                ]),
-            );
+
+        describe('with no selectors', () => {
+            it('should use index as key', () => {
+                const arr = [
+                    { id: 1, name: 'foo' },
+                    { id: 2, name: 'bar' },
+                ];
+                const map = arr.toMap();
+                expect(map instanceof Map).toBe(true);
+                expect(map.size).toBe(2);
+                expect(map.get(0)).toEqual({ id: 1, name: 'foo' });
+                expect(map.get(1)).toEqual({ id: 2, name: 'bar' });
+            });
         });
-        it('counts objects by property', () => {
-            const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
-            expect(arr.countBy()).toEqual(
-                new Map([
-                    [{ type: 'y' }, 1],
-                    [{ type: 'x' }, 1],
-                    [{ type: 'x' }, 1],
-                ]),
-            );
+
+        describe('error handling', () => {
+            it('should throw Error when key selector is invalid', () => {
+                expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+            });
         });
-        it('returns an empty Map for an empty array', () => {
-            expect([].countBy((x) => x)).toEqual(new Map());
+    });
+
+    describe('toSet()', () => {
+        describe('without selector', () => {
+            it('should return Set of unique elements', () => {
+                expect([1, 2, 2, 3].toSet()).toEqual(new Set([1, 2, 3]));
+            });
+
+            it('should return empty Set when array is empty', () => {
+                expect([].toSet()).toEqual(new Set());
+            });
         });
-        it('throws if arguments are invalid', () => {
-            expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+
+        describe('with selector function', () => {
+            it('should return Set of selected values', () => {
+                const arr = [{ id: 1 }, { id: 2 }, { id: 1 }];
+                expect(arr.toSet((x) => x.id)).toEqual(new Set([1, 2]));
+            });
+        });
+
+        describe('with selector string key', () => {
+            it('should return Set of property key values', () => {
+                const arr = [{ id: 1 }, { id: 2 }, { id: 1 }];
+                expect(arr.toSet('id')).toEqual(new Set([1, 2]));
+            });
+        });
+    });
+
+    describe('countBy()', () => {
+        describe('without selector', () => {
+            it('should count elements directly', () => {
+                const arr = ['a', 'b', 'a', 'c', 'b', 'a'];
+                expect(arr.countBy()).toEqual(
+                    new Map([
+                        ['a', 3],
+                        ['b', 2],
+                        ['c', 1],
+                    ]),
+                );
+            });
+
+            it('should return empty Map when array is empty', () => {
+                expect([].countBy((x) => x)).toEqual(new Map());
+            });
+        });
+
+        describe('with selector function', () => {
+            it('should count elements by selector result', () => {
+                const arr = ['a', 'b', 'a', 'c', 'b', 'a'];
+                expect(arr.countBy((x) => x)).toEqual(
+                    new Map([
+                        ['a', 3],
+                        ['b', 2],
+                        ['c', 1],
+                    ]),
+                );
+            });
+
+            it('should count objects by extracted value', () => {
+                const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
+                expect(arr.countBy((x) => x.type)).toEqual(
+                    new Map([
+                        ['x', 2],
+                        ['y', 1],
+                    ]),
+                );
+            });
+        });
+
+        describe('with selector string key', () => {
+            it('should count objects by property key', () => {
+                const arr = [{ type: 'x' }, { type: 'y' }, { type: 'x' }];
+                expect(arr.countBy('type')).toEqual(
+                    new Map([
+                        ['x', 2],
+                        ['y', 1],
+                    ]),
+                );
+            });
+        });
+
+        describe('error handling', () => {
+            it('should throw Error for invalid selector', () => {
+                expect(() => [{ id: 1 }].toMap(123 as any)).toThrow(Error);
+            });
         });
     });
 

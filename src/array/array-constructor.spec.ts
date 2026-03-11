@@ -1,8 +1,8 @@
 import '../array/array-constructor';
 import './array-constructor';
 
-describe('Array Constructor extensions', () => {
-    describe('range', () => {
+describe('Array', () => {
+    describe('range()', () => {
         it('should generate a range from 0 to n-1 if only start is given', () => {
             expect(Array.range(5)).toEqual([0, 1, 2, 3, 4]);
         });
@@ -15,10 +15,6 @@ describe('Array Constructor extensions', () => {
             expect(Array.range(5, 1, -1)).toEqual([5, 4, 3, 2]);
         });
 
-        it('should throw if step is 0', () => {
-            expect(() => Array.range(0, 5, 0)).toThrowError('step must not be 0');
-        });
-
         it('should return an empty array if start equals end', () => {
             expect(Array.range(3, 3)).toEqual([]);
         });
@@ -27,9 +23,15 @@ describe('Array Constructor extensions', () => {
             expect(Array.range(0, 5, -1)).toEqual([]);
             expect(Array.range(5, 0, 1)).toEqual([]);
         });
+
+        describe('error handling', () => {
+            it('should throw if step is 0', () => {
+                expect(() => Array.range(0, 5, 0)).toThrowError('step must not be 0');
+            });
+        });
     });
 
-    describe('repeat', () => {
+    describe('repeat()', () => {
         it('should fill an array with the same value', () => {
             expect(Array.repeat(3, 'a')).toEqual(['a', 'a', 'a']);
         });
@@ -43,14 +45,16 @@ describe('Array Constructor extensions', () => {
             expect(Array.repeat(0, 'x')).toEqual([]);
         });
 
-        it('should throw if length is negative or not an integer', () => {
-            expect(() => Array.repeat(-1, 'a')).toThrowError();
-            expect(() => Array.repeat(1.5, 'a')).toThrowError();
-            expect(() => Array.repeat('a' as any, 'a')).toThrowError();
+        describe('error handling', () => {
+            it('should throw if length is negative or not an integer', () => {
+                expect(() => Array.repeat(-1, 'a')).toThrowError();
+                expect(() => Array.repeat(1.5, 'a')).toThrowError();
+                expect(() => Array.repeat('a' as any, 'a')).toThrowError();
+            });
         });
     });
 
-    describe('zip', () => {
+    describe('zip()', () => {
         it('should zip two arrays of equal length', () => {
             expect(Array.zip([1, 2, 3], ['a', 'b', 'c'])).toEqual([
                 [1, 'a'],
@@ -67,14 +71,6 @@ describe('Array Constructor extensions', () => {
             ]);
         });
 
-        it('should return an empty array if no arrays are given', () => {
-            expect(Array.zip()).toEqual([]);
-        });
-
-        it('should return an array of undefined if all arrays are empty', () => {
-            expect(Array.zip([], [])).toEqual([]);
-        });
-
         it('should work with a single array', () => {
             expect(Array.zip([1, 2, 3])).toEqual([[1], [2], [3]]);
         });
@@ -86,21 +82,31 @@ describe('Array Constructor extensions', () => {
                 [undefined, 4],
             ]);
         });
+
+        describe('edge cases', () => {
+            it('should return an empty array if no arrays are given', () => {
+                expect(Array.zip()).toEqual([]);
+            });
+
+            it('should return an array of undefined if all arrays are empty', () => {
+                expect(Array.zip([], [])).toEqual([]);
+            });
+        });
     });
 
-    describe('create', () => {
-        it('creates a 1D array', () => {
+    describe('create()', () => {
+        it('should create a 1D array', () => {
             expect(Array.create('x', 3)).toEqual(['x', 'x', 'x']);
         });
 
-        it('creates a 2D array', () => {
+        it('should create a 2D array', () => {
             expect(Array.create(0, 2, 3)).toEqual([
                 [0, 0, 0],
                 [0, 0, 0],
             ]);
         });
 
-        it('creates a 3D array', () => {
+        it('should create a 3D array', () => {
             expect(Array.create(true, 2, 2, 2)).toEqual([
                 [
                     [true, true],
@@ -113,30 +119,34 @@ describe('Array Constructor extensions', () => {
             ]);
         });
 
-        it('returns [] if no sizes are given', () => {
-            expect(Array.create('x')).toEqual([]);
+        describe('edge cases', () => {
+            it('should return [] if no sizes are given', () => {
+                expect(Array.create('x')).toEqual([]);
+            });
+
+            it('should return [] if any size is 0', () => {
+                expect(Array.create('x', 0)).toEqual([]);
+                expect(Array.create('x', 2, 0)).toEqual([[], []]);
+            });
+
+            it('should return arrays with the same object reference for objects', () => {
+                const obj = { a: 1 };
+                const arr = Array.create(obj, 2);
+                expect(arr[0]).toBe(obj);
+                expect(arr[1]).toBe(obj);
+            });
         });
 
-        it('returns [] if any size is 0', () => {
-            expect(Array.create('x', 0)).toEqual([]);
-            expect(Array.create('x', 2, 0)).toEqual([[], []]);
-        });
+        describe('error handling', () => {
+            it('should throw if a size is negative', () => {
+                expect(() => Array.create('x', -1)).toThrow(TypeError);
+                expect(() => Array.create('x', 2, -3)).toThrow(TypeError);
+            });
 
-        it('throws if a size is negative', () => {
-            expect(() => Array.create('x', -1)).toThrow(TypeError);
-            expect(() => Array.create('x', 2, -3)).toThrow(TypeError);
-        });
-
-        it('throws if a size is not an integer', () => {
-            expect(() => Array.create('x', 2.5)).toThrow(TypeError);
-            expect(() => Array.create('x', 2, 1.1)).toThrow(TypeError);
-        });
-
-        it('returns arrays with the same object reference for objects', () => {
-            const obj = { a: 1 };
-            const arr = Array.create(obj, 2);
-            expect(arr[0]).toBe(obj);
-            expect(arr[1]).toBe(obj);
+            it('should throw if a size is not an integer', () => {
+                expect(() => Array.create('x', 2.5)).toThrow(TypeError);
+                expect(() => Array.create('x', 2, 1.1)).toThrow(TypeError);
+            });
         });
     });
 });
