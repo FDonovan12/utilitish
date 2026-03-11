@@ -1,4 +1,4 @@
-import { defineStaticIfNotExists } from '../utils';
+import { defineStaticIfNotExists } from '../utils/core.utils';
 
 export {};
 

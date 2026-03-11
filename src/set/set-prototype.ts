@@ -1,4 +1,4 @@
-import { defineIfNotExists } from '../utils';
+import { defineIfNotExists } from '../utils/core.utils';
 
 export {};
 

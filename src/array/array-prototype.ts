@@ -1,5 +1,5 @@
-import '../map/map-prototype'; // ensure Map extensions (toObject) are available when arrays convert to objects
-import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils';
+import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils/core.utils';
+import { mapToObject } from '../utils/logic.utils';
 
 export {};
 
@@ -322,7 +322,7 @@ defineIfNotExists(Array.prototype, 'toObject', function <
 >(this: T[], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Record<K, V | T> {
     const map = (this as T[]).toMap(keySelector as any, valueSelector as any);
 
-    return (map as unknown as Map<PropertyKey, any>).toObject() as Record<K, V | T>;
+    return mapToObject(map as unknown as Map<PropertyKey, any>) as Record<K, V | T>;
 });
 
 defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: Selector<T, K>): Set<T | K> {
