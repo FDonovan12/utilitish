@@ -126,4 +126,93 @@ describe('Object.prototype', () => {
             });
         });
     });
+
+    describe('stableStringify()', () => {
+        it('should stringify plain objects with sorted keys', () => {
+            const obj = { b: 2, a: 1 };
+            expect(obj.stableStringify()).toBe('{"a":1,"b":2}');
+        });
+
+        it('should produce same string regardless of key order', () => {
+            const obj1 = { b: 2, a: 1, c: 3 };
+            const obj2 = { c: 3, a: 1, b: 2 };
+            expect(obj1.stableStringify()).toBe(obj2.stableStringify());
+        });
+
+        it('should stringify arrays with element order preserved', () => {
+            const arr = [1, 2, 3];
+            expect(arr.stableStringify()).toBe('[1,2,3]');
+        });
+
+        it('should handle nested objects', () => {
+            const obj = { b: { d: 4, c: 3 }, a: 1 };
+            expect(obj.stableStringify()).toBe('{"a":1,"b":{"c":3,"d":4}}');
+        });
+
+        it('should handle arrays within objects', () => {
+            const obj = { a: [1, 2], b: 2 };
+            expect(obj.stableStringify()).toBe('{"a":[1,2],"b":2}');
+        });
+
+        it('should handle empty objects and arrays', () => {
+            expect({}.stableStringify()).toBe('{}');
+            expect([].stableStringify()).toBe('[]');
+        });
+
+        it('should handle undefined values in objects', () => {
+            const obj = { a: undefined, b: 1 };
+            expect(obj.stableStringify()).toBe('{"a":undefined,"b":1}');
+        });
+    });
+
+    describe('stableHash()', () => {
+        it('should generate same hash for objects with different key order', () => {
+            const obj1 = { b: 2, a: 1 };
+            const obj2 = { a: 1, b: 2 };
+            expect(obj1.stableHash()).toBe(obj2.stableHash());
+        });
+
+        it('should generate different hashes for different objects', () => {
+            const obj1 = { a: 1, b: 2 };
+            const obj2 = { a: 1, b: 3 };
+            expect(obj1.stableHash()).not.toBe(obj2.stableHash());
+        });
+
+        it('should generate consistent hashes', () => {
+            const obj = { a: 1, b: 2 };
+            const hash1 = obj.stableHash();
+            const hash2 = obj.stableHash();
+            expect(hash1).toBe(hash2);
+        });
+
+        it('should generate hex string', () => {
+            const obj = { a: 1 };
+            const hash = obj.stableHash();
+            expect(/^[0-9a-f]+$/.test(hash)).toBe(true);
+        });
+
+        it('should handle arrays', () => {
+            const arr1 = [1, 2, 3];
+            const arr2 = [1, 2, 3];
+            expect(arr1.stableHash()).toBe(arr2.stableHash());
+        });
+
+        it('should handle different arrays', () => {
+            const arr1 = [1, 2, 3];
+            const arr2 = [3, 2, 1];
+            expect(arr1.stableHash()).not.toBe(arr2.stableHash());
+        });
+
+        it('should handle nested structures', () => {
+            const obj1 = { a: [1, { b: 2 }], c: 3 };
+            const obj2 = { c: 3, a: [1, { b: 2 }] };
+            expect(obj1.stableHash()).toBe(obj2.stableHash());
+        });
+
+        it('should handle empty objects', () => {
+            const obj1 = {};
+            const obj2 = {};
+            expect(obj1.stableHash()).toBe(obj2.stableHash());
+        });
+    });
 });

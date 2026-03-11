@@ -1,4 +1,4 @@
-export {};
+import { defineIfNotExists } from '../utils/core.utils';
 
 declare global {
     interface Object {
@@ -74,32 +74,60 @@ declare global {
          * - null and undefined are handled correctly
          */
         deepEquals(other: unknown): boolean;
+
+        /**
+         * Converts the object to a stable string representation with sorted keys.
+         * The resulting string is deterministic: the same object will always produce the same string.
+         *
+         * @returns {string} A stable string representation of the object
+         *
+         * @example
+         * const obj = { b: 2, a: 1 };
+         * obj.stableStringify(); // '{"a":1,"b":2}'
+         *
+         * const obj2 = { a: 1, b: 2 };
+         * obj2.stableStringify(); // '{"a":1,"b":2}' (same result, different key order)
+         *
+         * @remarks
+         * - Object keys are sorted alphabetically to ensure stable output
+         * - Arrays maintain their element order
+         * - Null and primitives are handled using JSON.stringify
+         */
+        stableStringify(): string;
+
+        /**
+         * Generates a stable hash of the object using FNV-1a algorithm.
+         * The hash is deterministic: the same object will always produce the same hash.
+         *
+         * @returns {string} A hexadecimal string representing the hash of the object
+         *
+         * @example
+         * const obj = { b: 2, a: 1 };
+         * obj.stableHash(); // '7a8c9f2b'
+         *
+         * const obj2 = { a: 1, b: 2 };
+         * obj2.stableHash(); // '7a8c9f2b' (same hash, different key order)
+         *
+         * @remarks
+         * - Uses FNV-1a (Fowler–Noll–Vo) hashing algorithm
+         * - The object is first converted to a stable string using stableStringify()
+         * - The hash is returned as a hexadecimal string
+         */
+        stableHash(): string;
     }
 }
-
-const defineIfNotExists = (name: string, fn: Function) => {
-    const descriptor = Object.getOwnPropertyDescriptor(Object.prototype, name);
-    if (!descriptor || descriptor.writable || descriptor.configurable) {
-        Object.defineProperty(Object.prototype, name, {
-            value: fn,
-            enumerable: false,
-            configurable: true,
-            writable: true,
-        });
-    }
-};
 
 /**
  * @see Object.prototype.deepClone
  */
-defineIfNotExists('deepClone', function (this: any) {
+defineIfNotExists(Object.prototype, 'deepClone', function (this: any) {
     return structuredClone(this);
 });
 
 /**
  * @see Object.prototype.deepMerge
  */
-defineIfNotExists('deepMerge', function (this: object, source: any) {
+defineIfNotExists(Object.prototype, 'deepMerge', function (this: object, source: any) {
     if (typeof source !== 'object' || source === null) {
         throw new TypeError('Source must be a non-null object');
     }
@@ -123,7 +151,7 @@ defineIfNotExists('deepMerge', function (this: object, source: any) {
 /**
  * @see Object.prototype.deepEquals
  */
-defineIfNotExists('deepEquals', function (this: unknown, other: unknown): boolean {
+defineIfNotExists(Object.prototype, 'deepEquals', function (this: unknown, other: unknown): boolean {
     function eq(a: any, b: any): boolean {
         // Functions: always false (even if code is the same)
         if (typeof a === 'function' || typeof b === 'function') {
@@ -169,4 +197,45 @@ defineIfNotExists('deepEquals', function (this: unknown, other: unknown): boolea
         return false;
     }
     return eq(this, other);
+});
+
+/**
+ * @see Object.prototype.stableStringify
+ */
+defineIfNotExists(Object.prototype, 'stableStringify', function (this: any): string {
+    const stringify = (v: unknown): string => {
+        if (v === null || typeof v !== 'object') {
+            return JSON.stringify(v);
+        }
+
+        if (Array.isArray(v)) {
+            return '[' + v.map(stringify).join(',') + ']';
+        }
+
+        const obj = v as Record<string, unknown>;
+
+        const keys = Object.keys(obj).sort();
+
+        const entries = keys.map((key) => JSON.stringify(key) + ':' + stringify(obj[key]));
+
+        return '{' + entries.join(',') + '}';
+    };
+
+    return stringify(this);
+});
+
+/**
+ * @see Object.prototype.stableHash
+ */
+defineIfNotExists(Object.prototype, 'stableHash', function (this: any): string {
+    const str: string = (this as any).stableStringify();
+
+    let hash = 2166136261;
+
+    for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+
+    return (hash >>> 0).toString(16);
 });

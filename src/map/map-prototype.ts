@@ -1,8 +1,6 @@
 import { defineIfNotExists } from '../utils/core.utils';
 import { mapToObject } from '../utils/logic.utils';
 
-export {};
-
 declare global {
     interface Map<K, V> {
         /**

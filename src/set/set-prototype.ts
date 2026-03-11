@@ -1,7 +1,5 @@
 import { defineIfNotExists } from '../utils/core.utils';
 
-export {};
-
 declare global {
     interface Set<T> {
         /**

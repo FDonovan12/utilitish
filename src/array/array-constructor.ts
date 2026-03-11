@@ -1,7 +1,5 @@
 import { defineStaticIfNotExists } from '../utils/core.utils';
 
-export {};
-
 declare global {
     interface ArrayConstructor {
         /**

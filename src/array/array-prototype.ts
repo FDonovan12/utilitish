@@ -1,8 +1,6 @@
 import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils/core.utils';
 import { mapToObject, sortBy } from '../utils/logic.utils';
 
-export {};
-
 declare global {
     interface Array<T> {
         /**
