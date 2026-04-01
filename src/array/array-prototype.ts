@@ -1,5 +1,5 @@
 import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils/core.utils';
-import { mapToObject, sortBy } from '../utils/logic.utils';
+import { sortBy } from '../utils/logic.utils';
 
 declare global {
     interface Array<T> {
@@ -51,7 +51,7 @@ declare global {
          * - Returns 0 for empty arrays regardless of type
          */
         sum(this: number[]): number;
-        sum(this: T[], selector?: Selector<T, number>): number;
+        sum(this: T[], selector: Selector<T, number>): number;
 
         /**
          * Returns a new array with only unique elements based on strict equality (===).
@@ -198,7 +198,8 @@ declare global {
          * - Returns new array; does not mutate original
          * - Empty arrays return empty array
          */
-        sortAsc(this: T[], selector?: Selector<T, number | string>): T[];
+        sortAsc(this: (number | string)[]): T[];
+        sortAsc(this: T[], selector: Selector<T, number | string>): T[];
 
         /**
          * Returns a new sorted copy of the array in descending order.
@@ -222,7 +223,8 @@ declare global {
          * - Returns new array; does not mutate original
          * - Empty arrays return empty array
          */
-        sortDesc(this: T[], selector?: Selector<T, number | string>): T[];
+        sortDesc(this: (number | string)[]): T[];
+        sortDesc(this: T[], selector: Selector<T, number | string>): T[];
 
         /**
          * Swaps the elements at two indices within the array.
@@ -556,10 +558,33 @@ defineIfNotExists(Array.prototype, 'toObject', function <
     T,
     K extends PropertyKey,
     V,
->(this: T[], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Record<K, V | T> {
-    const map = (this as T[]).toMap(keySelector as any, valueSelector as any);
+>(this: T[], keySelector?: Selector<T, K>, valueSelector?: Selector<T, V>): Record<K | number, V | T> {
+    let entries: [K | number, V | T][];
 
-    return mapToObject(map as unknown as Map<PropertyKey, any>) as Record<K, V | T>;
+    if (!keySelector && this.length && this.every((item) => Array.isArray(item) && item.length === 2)) {
+        entries = this as [K, V][];
+    } else {
+        const getKey = resolveSelector(keySelector, (_: T, index?: number) => index as number | K);
+        const getValue = resolveSelector(valueSelector, (item: T) => item as V | T);
+
+        entries = this.map((item, index) => [getKey(item, index), getValue(item)]);
+    }
+
+    // Validate keys
+    for (const [key] of entries) {
+        if (key === null || key === undefined) {
+            throw new TypeError(`Invalid key: key cannot be null or undefined. Key received: ${String(key)}`);
+        }
+
+        const keyType = typeof key;
+        if (keyType !== 'string' && keyType !== 'number' && keyType !== 'symbol') {
+            throw new TypeError(
+                `Invalid key type: keys must be string, number, or symbol, received ${keyType}. Key value: ${String(key)}`,
+            );
+        }
+    }
+
+    return Object.fromEntries(entries) as Record<K | number, V | T>;
 });
 
 defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: Selector<T, K>): Set<T | K> {

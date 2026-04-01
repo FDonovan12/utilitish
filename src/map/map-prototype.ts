@@ -1,5 +1,4 @@
 import { defineIfNotExists } from '../utils/core.utils';
-import { mapToObject } from '../utils/logic.utils';
 
 declare global {
     interface Map<K, V> {
@@ -129,7 +128,22 @@ defineIfNotExists(Map.prototype, 'toList', function <
  * @see Map.prototype.toObject
  */
 defineIfNotExists(Map.prototype, 'toObject', function <K extends PropertyKey, V>(this: Map<K, V>): Record<K, V> {
-    return mapToObject(this);
+    const entries = Array.from(this.entries());
+
+    for (const [key] of entries) {
+        if (key === null || key === undefined) {
+            throw new TypeError(`Invalid key: key cannot be null or undefined. Key received: ${String(key)}`);
+        }
+
+        const keyType = typeof key;
+        if (keyType !== 'string' && keyType !== 'number' && keyType !== 'symbol') {
+            throw new TypeError(
+                `Invalid key type: keys must be string, number, or symbol, received ${keyType}. Key value: ${String(key)}`,
+            );
+        }
+    }
+
+    return Object.fromEntries(entries) as Record<K, V>;
 });
 
 /**
