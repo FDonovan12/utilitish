@@ -1,4 +1,6 @@
 import { defineIfNotExists } from '../utils/core.utils';
+import { SlugifyConfig } from '../utils/slugify.config';
+import { slugifyString } from '../utils/slugify.utils';
 
 declare global {
     interface String {
@@ -147,24 +149,61 @@ declare global {
         /**
          * Converts the string into a URL-friendly slug format.
          * Combines normalization, lowercasing, whitespace handling, and special character removal.
+         * Can be customized using global configuration or per-call options.
          *
          * @this {string} The string to slugify
+         * @param {SlugifyConfig} [config] - Optional configuration to override global settings
          * @returns {string} A URL-safe slug version of the string
          *
          * @example
+         * // Basic usage (default config)
          * 'Hello World'.slugify(); // 'hello-world'
          * 'Héllo Wørld'.slugify(); // 'hello-world'
          * 'Hello  World!!!'.slugify(); // 'hello-world'
          *
+         * @example
+         * // Custom replacements
+         * 'Test ♀'.slugify({ customReplacements: { "♀": "feminin" } }); // 'test-feminin'
+         * 'User♂@domain.com'.slugify({ customReplacements: { "♂": "masculin", "@": "at" } }); // 'usermasculinatdomain-com'
+         *
+         * @example
+         * // Custom separator
+         * 'Hello World'.slugify({ separator: "_" }); // 'hello_world'
+         * 'Hello World'.slugify({ separator: "--" }); // 'hello--world'
+         *
+         * @example
+         * // Preserve accents
+         * 'Éléphant'.slugify({ removeAccents: false }); // 'éléphant'
+         *
+         * @example
+         * // Disable lowercasing
+         * 'Hello World'.slugify({ lowercase: false }); // 'Hello-World'
+         *
+         * @example
+         * // Max length
+         * 'Very long string'.slugify({ maxLength: 8 }); // 'very-lon'
+         *
+         * @example
+         * // Custom transformers
+         * 'hello world'.slugify({
+         *   transformers: [(str) => str.replace(/world/g, 'universe')]
+         * }); // 'hello-universe'
+         *
          * @remarks
-         * - Normalizes Unicode characters (NFD decomposition)
-         * - Removes accents and diacritical marks
-         * - Converts to lowercase
-         * - Replaces spaces and special characters with hyphens
-         * - Removes leading/trailing hyphens
-         * - Collapses multiple consecutive hyphens into one
+         * - Uses global configuration by default (see setSlugifyConfig)
+         * - Normalizes Unicode characters (NFD decomposition) by default
+         * - Removes accents and diacritical marks by default
+         * - Converts to lowercase by default
+         * - Replaces spaces and special characters with separator (hyphen by default)
+         * - Removes leading/trailing separators
+         * - Collapses multiple consecutive separators into one
+         *
+         * @see setSlugifyConfig
+         * @see getSlugifyConfig
+         * @see resetSlugifyConfig
          */
         slugify(): string;
+        slugify(config: SlugifyConfig): string;
 
         /**
          * Replaces a substring between `start` and `end` indices with a given string.
@@ -257,12 +296,8 @@ defineIfNotExists(String.prototype, 'isEmpty', function (this: string): boolean 
 /**
  * @see String.prototype.slugify
  */
-defineIfNotExists(String.prototype, 'slugify', function (this: string): string {
-    return this.normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-zA-Z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .toLowerCase();
+defineIfNotExists(String.prototype, 'slugify', function (this: string, config?: SlugifyConfig): string {
+    return slugifyString(this, config);
 });
 
 /**

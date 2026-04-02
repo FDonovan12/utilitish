@@ -1,4 +1,5 @@
 import '../string/string-prototype';
+import { resetSlugifyConfig, setSlugifyConfig } from '../utils/slugify.config';
 
 describe('String.prototype', () => {
     describe('capitalize()', () => {
@@ -76,10 +77,96 @@ describe('String.prototype', () => {
     });
 
     describe('slugify()', () => {
-        it('should slugify a string', () => {
+        beforeEach(() => {
+            resetSlugifyConfig(); // Reset to defaults before each test
+        });
+
+        it('should slugify a string with default config', () => {
             expect('Hello World!'.slugify()).toBe('hello-world');
             expect("Éléphant à l'été".slugify()).toBe('elephant-a-l-ete');
             expect('  --Hello__World--  '.slugify()).toBe('hello-world');
+        });
+
+        describe('custom replacements', () => {
+            it('should apply custom replacements per call', () => {
+                expect('Test ♀'.slugify({ customReplacements: { '♀': 'feminin' } })).toBe('test-feminin');
+                expect('User♂@domain.com'.slugify({ customReplacements: { '♂': 'masculin', '@': 'at' } })).toBe(
+                    'usermasculinatdomain-com',
+                );
+            });
+
+            it('should handle special regex characters in replacements', () => {
+                expect('Test [bracket]'.slugify({ customReplacements: { '[': 'left', ']': 'right' } })).toBe(
+                    'test-leftbracketright',
+                );
+            });
+        });
+
+        describe('separator customization', () => {
+            it('should use custom separator globally', () => {
+                setSlugifyConfig({ separator: '_' });
+                expect('Hello World'.slugify()).toBe('hello_world');
+                expect('Test String'.slugify()).toBe('test_string');
+            });
+
+            it('should use custom separator per call', () => {
+                expect('Hello World'.slugify({ separator: '_' })).toBe('hello_world');
+                expect('Test String'.slugify({ separator: '__' })).toBe('test__string');
+            });
+        });
+
+        describe('case transformation', () => {
+            it('should respect lowercase setting globally', () => {
+                setSlugifyConfig({ lowercase: false });
+                expect('Hello World'.slugify()).toBe('Hello-World');
+            });
+
+            it('should respect lowercase setting per call', () => {
+                expect('Hello World'.slugify({ lowercase: false })).toBe('Hello-World');
+            });
+        });
+
+        describe('accent removal', () => {
+            it('should respect removeAccents setting per call', () => {
+                expect('Éléphant'.slugify({ removeAccents: false })).toBe('éléphant');
+            });
+        });
+
+        describe('allowed characters', () => {
+            it('should use custom allowed characters', () => {
+                expect('Hello123!@#'.slugify({ allowedChars: /[a-zA-Z0-9_]/ })).toBe('hello123');
+            });
+        });
+
+        describe('max length', () => {
+            it('should truncate to max length', () => {
+                expect('very-long-string-here'.slugify({ maxLength: 10 })).toBe('very-long');
+                expect('short'.slugify({ maxLength: 10 })).toBe('short');
+            });
+
+            it('should remove trailing separator after truncation', () => {
+                expect('hello-world-test'.slugify({ maxLength: 8 })).toBe('hello-wo');
+            });
+        });
+
+        describe('custom transformers', () => {
+            it('should apply custom transformers', () => {
+                const config = {
+                    transformers: [
+                        (str: string) => str.replace(/test/g, 'example'),
+                        (str: string) => str.toUpperCase(),
+                    ],
+                    lowercase: false,
+                };
+                expect('this is a test'.slugify(config)).toBe('THIS-IS-A-EXAMPLE');
+            });
+        });
+
+        describe('configuration merging', () => {
+            it('should merge global and local config correctly', () => {
+                // Local config should override global defaults
+                expect('Test ♀'.slugify({ separator: '_', customReplacements: { '♀': 'female' } })).toBe('test_female');
+            });
         });
     });
 
