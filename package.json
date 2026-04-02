@@ -7,7 +7,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "provenance": true
+    "provenance": false
   },
   "description": "",
   "main": "dist/index.js",

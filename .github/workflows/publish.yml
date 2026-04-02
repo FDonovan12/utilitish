@@ -10,18 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write # 🔥 OIDC
+      id-token: write # nécessaire pour OIDC
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true
 
       - name: Install dependencies
         run: npm install
@@ -32,19 +31,19 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Check npm identity
+      - name: Debug npm auth (optionnel)
         run: |
-          npm config get registry
-          npm whoami || echo "not authenticated"
+          npm config list
+          npm whoami || echo "Not authenticated yet"
 
       - name: Publish to npm
-        run: npm publish --provenance
+        run: npm publish
 
   build-doc:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write # 🔥 nécessaire pour push sur gh-pages
+      contents: write # nécessaire pour push sur gh-pages
 
     steps:
       - uses: actions/checkout@v4
