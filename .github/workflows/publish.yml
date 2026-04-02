@@ -35,6 +35,11 @@ jobs:
       - name: Publish to npm
         run: npm publish --provenance
 
+      - name: Check npm identity
+        run: |
+          npm config get registry
+          npm whoami || echo "not authenticated"
+
   build-doc:
     runs-on: ubuntu-latest
 
