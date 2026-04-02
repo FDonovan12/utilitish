@@ -32,13 +32,13 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Publish to npm
-        run: npm publish --provenance
-
       - name: Check npm identity
         run: |
           npm config get registry
           npm whoami || echo "not authenticated"
+
+      - name: Publish to npm
+        run: npm publish --provenance
 
   build-doc:
     runs-on: ubuntu-latest
