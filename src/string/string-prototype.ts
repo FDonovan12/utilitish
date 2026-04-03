@@ -163,31 +163,31 @@ declare global {
          *
          * @example
          * // Custom replacements
-         * 'Test ♀'.slugify({ customReplacements: { "♀": "feminin" } }); // 'test-feminin'
-         * 'User♂@domain.com'.slugify({ customReplacements: { "♂": "masculin", "@": "at" } }); // 'usermasculinatdomain-com'
+         * 'Test ♀'.slugify(SlugifyConfig.builder().withCustomReplacements({ "♀": "feminin" }).build()); // 'test-feminin'
+         * 'User♂@domain.com'.slugify(SlugifyConfig.builder().withCustomReplacements({ "♂": "masculin", "@": "at" }).build()); // 'usermasculinatdomain-com'
          *
          * @example
          * // Custom separator
-         * 'Hello World'.slugify({ separator: "_" }); // 'hello_world'
-         * 'Hello World'.slugify({ separator: "--" }); // 'hello--world'
+         * 'Hello World'.slugify(SlugifyConfig.builder().withSeparator("_").build()); // 'hello_world'
+         * 'Hello World'.slugify(SlugifyConfig.builder().withSeparator("--").build()); // 'hello--world'
          *
          * @example
          * // Preserve accents
-         * 'Éléphant'.slugify({ removeAccents: false }); // 'éléphant'
+         * 'Éléphant'.slugify(SlugifyConfig.builder().withRemoveAccents(false).build()); // 'éléphant'
          *
          * @example
          * // Disable lowercasing
-         * 'Hello World'.slugify({ lowercase: false }); // 'Hello-World'
+         * 'Hello World'.slugify(SlugifyConfig.builder().withCase('default').build()); // 'Hello-World'
          *
          * @example
          * // Max length
-         * 'Very long string'.slugify({ maxLength: 8 }); // 'very-lon'
+         * 'Very long string'.slugify(SlugifyConfig.builder().withMaxLength(8).build()); // 'very-lon'
          *
          * @example
          * // Custom transformers
-         * 'hello world'.slugify({
-         *   transformers: [(str) => str.replace(/world/g, 'universe')]
-         * }); // 'hello-universe'
+         * 'hello world'.slugify(SlugifyConfig.builder()
+         *   .withTransformers([(str) => str.replace(/world/g, 'universe')])
+         *   .build()); // 'hello-universe'
          *
          * @remarks
          * - Uses global configuration by default (see setSlugifyConfig)
@@ -198,6 +198,7 @@ declare global {
          * - Removes leading/trailing separators
          * - Collapses multiple consecutive separators into one
          *
+         * @see SlugifyConfig
          * @see setSlugifyConfig
          * @see getSlugifyConfig
          * @see resetSlugifyConfig

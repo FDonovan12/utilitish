@@ -1,5 +1,5 @@
 import '../string/string-prototype';
-import { resetSlugifyConfig, setSlugifyConfig } from '../utils/slugify.config';
+import { resetSlugifyConfig, setSlugifyConfig, SlugifyConfig } from '../utils/slugify.config';
 
 describe('String.prototype', () => {
     describe('capitalize()', () => {
@@ -89,75 +89,114 @@ describe('String.prototype', () => {
 
         describe('custom replacements', () => {
             it('should apply custom replacements per call', () => {
-                expect('Test ♀'.slugify({ customReplacements: { '♀': 'feminin' } })).toBe('test-feminin');
-                expect('User♂@domain.com'.slugify({ customReplacements: { '♂': 'masculin', '@': 'at' } })).toBe(
-                    'usermasculinatdomain-com',
-                );
+                expect(
+                    'Test ♀'.slugify(SlugifyConfig.builder().withCustomReplacements({ '♀': 'feminin' }).build()),
+                ).toBe('test-feminin');
+                expect(
+                    'User♂@domain.com'.slugify(
+                        SlugifyConfig.builder().withCustomReplacements({ '♂': 'masculin', '@': 'at' }).build(),
+                    ),
+                ).toBe('usermasculinatdomain-com');
             });
 
             it('should handle special regex characters in replacements', () => {
-                expect('Test [bracket]'.slugify({ customReplacements: { '[': 'left', ']': 'right' } })).toBe(
-                    'test-leftbracketright',
-                );
+                expect(
+                    'Test [bracket]'.slugify(
+                        SlugifyConfig.builder().withCustomReplacements({ '[': 'left', ']': 'right' }).build(),
+                    ),
+                ).toBe('test-leftbracketright');
             });
         });
 
         describe('separator customization', () => {
             it('should use custom separator globally', () => {
-                setSlugifyConfig({ separator: '_' });
+                setSlugifyConfig(SlugifyConfig.builder().withSeparator('_').build());
                 expect('Hello World'.slugify()).toBe('hello_world');
                 expect('Test String'.slugify()).toBe('test_string');
             });
 
             it('should use custom separator per call', () => {
-                expect('Hello World'.slugify({ separator: '_' })).toBe('hello_world');
-                expect('Test String'.slugify({ separator: '__' })).toBe('test__string');
+                expect('Hello World'.slugify(SlugifyConfig.builder().withSeparator('_').build())).toBe('hello_world');
+                expect('Test String'.slugify(SlugifyConfig.builder().withSeparator('__').build())).toBe('test__string');
             });
         });
 
         describe('case transformation', () => {
             it('should respect lowercase setting globally', () => {
-                setSlugifyConfig({ lowercase: false });
+                setSlugifyConfig(SlugifyConfig.builder().withCase('default').build());
                 expect('Hello World'.slugify()).toBe('Hello-World');
             });
 
             it('should respect lowercase setting per call', () => {
-                expect('Hello World'.slugify({ lowercase: false })).toBe('Hello-World');
+                expect('Hello World'.slugify(SlugifyConfig.builder().withCase('default').build())).toBe('Hello-World');
             });
         });
 
         describe('accent removal', () => {
             it('should respect removeAccents setting per call', () => {
-                expect('Éléphant'.slugify({ removeAccents: false })).toBe('éléphant');
+                expect('Éléphant'.slugify(SlugifyConfig.builder().withRemoveAccents(false).build())).toBe('éléphant');
             });
         });
 
         describe('allowed characters', () => {
             it('should use custom allowed characters', () => {
-                expect('Hello123!@#'.slugify({ allowedChars: /[a-zA-Z0-9_]/ })).toBe('hello123');
+                expect(
+                    'Hello123!@#'.slugify(
+                        SlugifyConfig.builder()
+                            .withAllowedChars(/[a-zA-Z0-9_]/)
+                            .build(),
+                    ),
+                ).toBe('hello123');
+            });
+
+            it('should throw for invalid allowedChars regex in call', () => {
+                expect(() =>
+                    SlugifyConfig.builder()
+                        .withAllowedChars(/foo|bar/)
+                        .build(),
+                ).toThrowError(/Invalid allowedChars:/);
+            });
+
+            it('should throw for invalid allowedChars regex in global config', () => {
+                expect(() =>
+                    setSlugifyConfig(
+                        SlugifyConfig.builder()
+                            .withAllowedChars(/foo|bar/)
+                            .build(),
+                    ),
+                ).toThrowError(/Invalid allowedChars:/);
+            });
+        });
+
+        describe('separator special characters', () => {
+            it('should handle regex-special separators without breaking', () => {
+                expect('a b+c'.slugify(SlugifyConfig.builder().withSeparator('.').build())).toBe('a.b.c');
+                expect('a.b.c'.slugify(SlugifyConfig.builder().withSeparator('*').build())).toBe('a*b*c');
             });
         });
 
         describe('max length', () => {
             it('should truncate to max length', () => {
-                expect('very-long-string-here'.slugify({ maxLength: 10 })).toBe('very-long');
-                expect('short'.slugify({ maxLength: 10 })).toBe('short');
+                expect('very-long-string-here'.slugify(SlugifyConfig.builder().withMaxLength(10).build())).toBe(
+                    'very-long',
+                );
+                expect('short'.slugify(SlugifyConfig.builder().withMaxLength(10).build())).toBe('short');
             });
 
             it('should remove trailing separator after truncation', () => {
-                expect('hello-world-test'.slugify({ maxLength: 8 })).toBe('hello-wo');
+                expect('hello-world-test'.slugify(SlugifyConfig.builder().withMaxLength(8).build())).toBe('hello-wo');
             });
         });
 
         describe('custom transformers', () => {
             it('should apply custom transformers', () => {
-                const config = {
-                    transformers: [
+                const config = SlugifyConfig.builder()
+                    .withTransformers([
                         (str: string) => str.replace(/test/g, 'example'),
                         (str: string) => str.toUpperCase(),
-                    ],
-                    lowercase: false,
-                };
+                    ])
+                    .withCase('upper')
+                    .build();
                 expect('this is a test'.slugify(config)).toBe('THIS-IS-A-EXAMPLE');
             });
         });
@@ -165,7 +204,11 @@ describe('String.prototype', () => {
         describe('configuration merging', () => {
             it('should merge global and local config correctly', () => {
                 // Local config should override global defaults
-                expect('Test ♀'.slugify({ separator: '_', customReplacements: { '♀': 'female' } })).toBe('test_female');
+                expect(
+                    'Test ♀'.slugify(
+                        SlugifyConfig.builder().withSeparator('_').withCustomReplacements({ '♀': 'female' }).build(),
+                    ),
+                ).toBe('test_female');
             });
         });
     });
