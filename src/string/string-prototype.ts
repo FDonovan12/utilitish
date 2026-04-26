@@ -207,6 +207,27 @@ declare global {
         slugify(config: SlugifyConfig): string;
 
         /**
+         * Compares two strings by slugifying both and checking if they are equal.
+         * Useful for case-insensitive and accent-insensitive string comparison.
+         *
+         * @this {string} The first string to compare
+         * @param {string} other - The second string to compare
+         * @returns {boolean} True if both slugified strings are equal, false otherwise
+         * @throws {TypeError} If the parameter is not a string
+         *
+         * @example
+         * 'Hello World'.compareSlugify('hello-world'); // true
+         * 'Héllo Wørld'.compareSlugify('hello-world'); // true
+         * 'Hello World'.compareSlugify('goodbye-world'); // false
+         *
+         * @remarks
+         * - Both strings are slugified using the default or global configuration
+         * - Useful for comparing user-provided strings with stored slugs
+         * - Guard ensures the parameter is a valid string type
+         */
+        compareSlugify(other: string): boolean;
+
+        /**
          * Replaces a substring between `start` and `end` indices with a given string.
          * Provides precise control over which portion of the string to replace.
          *
@@ -307,6 +328,16 @@ defineIfNotExists(String.prototype, 'slugify', function (this: string, config?: 
 defineIfNotExists(String.prototype, 'capitalize', function (this: string): string {
     if (this.length === 0) return '';
     return this.charAt(0).toUpperCase() + this.slice(1);
+});
+
+/**
+ * @see String.prototype.compareSlugify
+ */
+defineIfNotExists(String.prototype, 'compareSlugify', function (this: string, other: string): boolean {
+    if (typeof other !== 'string') {
+        throw new TypeError('Parameter must be a string');
+    }
+    return this.slugify() === other.slugify();
 });
 
 /**

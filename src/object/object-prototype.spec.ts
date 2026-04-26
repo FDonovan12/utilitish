@@ -25,14 +25,12 @@ describe('Object.prototype', () => {
             const source = { b: { d: 3 }, e: 4 };
             const merged = obj.deepMerge<typeof obj>(source);
             expect(merged).toEqual({ a: 1, b: { c: 2, d: 3 }, e: 4 });
-            console.log(merged);
         });
 
         it('should overwrite primitive values', () => {
             const obj = { a: 1, b: 2 };
             const merged = obj.deepMerge({ b: 3 });
             expect(merged).toEqual({ a: 1, b: 3 });
-            console.log(merged);
         });
 
         describe('error handling', () => {

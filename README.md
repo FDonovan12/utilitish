@@ -16,16 +16,19 @@ Vous pouvez définir une configuration globale qui s'appliquera à tous les appe
 import { setSlugifyConfig } from 'utilitish';
 
 // Configuration pour remplacer les symboles de genre
-setSlugifyConfig({
-    customReplacements: {
-        '♀': 'feminin',
-        '♂': 'masculin',
-    },
-    separator: '_',
-});
+setSlugifyConfig(
+    SlugifyConfig.builder()
+        .withSeparator('_')
+        .withCustomReplacements({
+            '♀': 'feminin',
+            '♂': 'masculin',
+            '@': 'at',
+        })
+        .build(),
+);
 
 'Test ♀'.slugify(); // "test_feminin"
-'User♂@domain.com'.slugify(); // "user_masculin_at_domain_com"
+'User♂@domain.com'.slugify(); // "usermasculinatdomain_com"
 ```
 
 ### Configuration par appel
@@ -37,7 +40,7 @@ Vous pouvez aussi passer une configuration spécifique à chaque appel :
 'Hello World'.slugify(); // "hello-world"
 
 // Override la config pour cet appel
-'Hello World'.slugify({ separator: '_' }); // "hello_world"
+'Hello World'.slugify(SlugifyConfig.builder().withSeparator('_').build()); // "hello_world"
 ```
 
 ### Options de configuration

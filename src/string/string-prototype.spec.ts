@@ -213,6 +213,49 @@ describe('String.prototype', () => {
         });
     });
 
+    describe('compareSlugify()', () => {
+        beforeEach(() => {
+            resetSlugifyConfig(); // Reset to defaults before each test
+        });
+
+        it('should return true when slugified strings are equal', () => {
+            expect('Hello World'.compareSlugify('hello-world')).toBe(true);
+            expect('hello world'.compareSlugify('hello-world')).toBe(true);
+            expect('HELLO WORLD'.compareSlugify('hello-world')).toBe(true);
+        });
+
+        it('should handle accents and special characters', () => {
+            expect('Café'.compareSlugify('cafe')).toBe(true);
+            expect('Éléphant'.compareSlugify('elephant')).toBe(true);
+            expect('naïve café'.compareSlugify('naive-cafe')).toBe(true);
+            expect('résumé'.compareSlugify('resume')).toBe(true);
+        });
+
+        it('should return false when slugified strings are different', () => {
+            expect('Hello World'.compareSlugify('goodbye-world')).toBe(false);
+            expect('test string'.compareSlugify('different-string')).toBe(false);
+        });
+
+        it('should handle extra spaces and special characters', () => {
+            expect('  Hello  ---  World  '.compareSlugify('hello-world')).toBe(true);
+            expect('Hello!!!World???'.compareSlugify('hello-world')).toBe(true);
+        });
+
+        it('should throw TypeError if parameter is not a string', () => {
+            expect(() => 'hello'.compareSlugify(123 as any)).toThrowError(TypeError);
+            expect(() => 'hello'.compareSlugify(null as any)).toThrowError(TypeError);
+            expect(() => 'hello'.compareSlugify(undefined as any)).toThrowError(TypeError);
+            expect(() => 'hello'.compareSlugify({} as any)).toThrowError(TypeError);
+            expect(() => 'hello'.compareSlugify([] as any)).toThrowError(TypeError);
+        });
+
+        it('should work with empty strings', () => {
+            expect(''.compareSlugify('')).toBe(true);
+            expect('   '.compareSlugify('')).toBe(true);
+            expect('hello'.compareSlugify('')).toBe(false);
+        });
+    });
+
     describe('replaceRange()', () => {
         it('should replace a single character at the given index', () => {
             expect('hello'.replaceRange(1, 2, 'a')).toBe('hallo');
