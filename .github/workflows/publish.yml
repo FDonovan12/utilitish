@@ -1,4 +1,4 @@
-name: Publish Package
+name: CI & Docs
 
 on:
   push:
@@ -6,21 +6,15 @@ on:
       - main
 
 jobs:
-  build-and-publish:
+  test:
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write # nécessaire pour OIDC
-      contents: read
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
@@ -31,19 +25,12 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Debug npm auth (optionnel)
-        run: |
-          npm config list
-          npm whoami || echo "Not authenticated yet"
-
-      - name: Publish to npm
-        run: npm publish
-
   build-doc:
     runs-on: ubuntu-latest
+    needs: test
 
     permissions:
-      contents: write # nécessaire pour push sur gh-pages
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install

@@ -18,7 +18,9 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "release": "npm version patch && npm publish",
+    "prepublishOnly": "npm test && git add -A && git commit -m \"chore: release v$npm_package_version\" --allow-empty && git tag v$npm_package_version && git push && git push --tags"
   },
   "keywords": [
     "typescript",
