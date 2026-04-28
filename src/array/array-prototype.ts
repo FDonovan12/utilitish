@@ -1,4 +1,4 @@
-import { defineIfNotExists, isNumberOrString, resolveSelector, Selector } from '../utils/core.utils';
+import { defineIfNotExists, isNumberOrString, resolveSelector, Selector, utilitishError } from '../utils/core.utils';
 import { sortBy } from '../utils/logic.utils';
 
 declare global {
@@ -408,17 +408,48 @@ declare global {
          * - Empty array returns empty Map
          */
         countBy<K>(this: T[], selector?: Selector<T, K>): Map<T | K, number>;
+
+        /**
+         * Checks if the slugified version of a value matches any slugified string in this array.
+         * Useful for case-insensitive and accent-insensitive array search.
+         *
+         * @this {string[]} The array of strings to search in.
+         * @param {string} value - The string to search for.
+         * @returns {boolean} `true` if any slugified item in the array equals the slugified `value`, `false` otherwise.
+         * @throws {TypeError} If `value` is not a string.
+         * @throws {TypeError} If any item in the array is not a string.
+         *
+         * @example
+         * ['Hello World', 'Foo Bar'].slugifyIncludes('hello-world'); // true
+         * ['Héllo World', 'Foo Bar'].slugifyIncludes('hello-world'); // true
+         * ['Hello World', 'Foo Bar'].slugifyIncludes('baz');         // false
+         *
+         * @remarks
+         * - All strings are slugified before comparison.
+         * - Since `slugify` is idempotent, passing an already-slugified value works as expected.
+         * - Throws on the first non-string item encountered in the array.
+         */
+        slugifyIncludes(value: string): boolean;
     }
 }
 
+/**
+ * @see Array.prototype.first
+ */
 defineIfNotExists(Array.prototype, 'first', function <T>(this: T[]): T | undefined {
     return this[0];
 });
 
+/**
+ * @see Array.prototype.last
+ */
 defineIfNotExists(Array.prototype, 'last', function <T>(this: T[]): T | undefined {
     return this[this.length - 1];
 });
 
+/**
+ * @see Array.prototype.sum
+ */
 defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], selector?: Selector<T, number>): number {
     if (this.length === 0) return 0;
     const getValue = resolveSelector(selector, (item: T) => item as number);
@@ -428,10 +459,16 @@ defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], selector?: Sel
     throw new TypeError('Array.prototype.sum() requires a selector who return a number unless array is number[]');
 });
 
+/**
+ * @see Array.prototype.unique
+ */
 defineIfNotExists(Array.prototype, 'unique', function <T>(this: T[]): T[] {
     return [...new Set(this)];
 });
 
+/**
+ * @see Array.prototype.chunk
+ */
 defineIfNotExists(Array.prototype, 'chunk', function <T>(this: T[], size: number): T[][] {
     if (typeof size !== 'number' || !Number.isInteger(size) || size <= 0) {
         throw new TypeError('Chunk size must be a positive integer');
@@ -443,6 +480,9 @@ defineIfNotExists(Array.prototype, 'chunk', function <T>(this: T[], size: number
     return result;
 });
 
+/**
+ * @see Array.prototype.average
+ */
 defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], selector?: Selector<T, number>): number {
     if (this.length === 0) return 0;
     const getValue = resolveSelector(selector, (item: T) => item as number);
@@ -452,6 +492,9 @@ defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], selector?:
     throw new TypeError('Array.prototype.average() requires a selector who return a number unless array is number[]');
 });
 
+/**
+ * @see Array.prototype.groupBy
+ */
 defineIfNotExists(Array.prototype, 'groupBy', function <T, K>(this: T[], selector?: Selector<T, K>): Map<K, T[]> {
     const getKey = resolveSelector(selector, (item: T) => item as unknown as K);
 
@@ -466,14 +509,24 @@ defineIfNotExists(Array.prototype, 'groupBy', function <T, K>(this: T[], selecto
     return map;
 });
 
+/**
+ * @see Array.prototype.compact
+ */
 defineIfNotExists(Array.prototype, 'compact', function <T>(this: T[]): T[] {
     return this.filter(Boolean);
 });
 
+/**
+ * @see Array.prototype.enumerate
+ */
 defineIfNotExists(Array.prototype, 'enumerate', function <T>(this: T[]): [T, number][] {
     return this.map((value, index) => [value, index]);
 });
 
+/**
+ * @see Array.prototype.sortAsc
+ * @see Array.prototype.sortDesc
+ */
 defineIfNotExists(Array.prototype, 'sortBy', function <
     T,
 >(this: T[], direction: 'asc' | 'desc', selector?: Selector<T, number | string>): T[] {
@@ -499,14 +552,23 @@ defineIfNotExists(Array.prototype, 'sortBy', function <
     });
 });
 
+/**
+ * @see Array.prototype.sortAsc
+ */
 defineIfNotExists(Array.prototype, 'sortAsc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
     return sortBy(this, 'asc', selector);
 });
 
+/**
+ * @see Array.prototype.sortDesc
+ */
 defineIfNotExists(Array.prototype, 'sortDesc', function <T>(this: T[], selector?: Selector<T, number | string>): T[] {
     return sortBy(this, 'desc', selector);
 });
 
+/**
+ * @see Array.prototype.swap
+ */
 defineIfNotExists(Array.prototype, 'swap', function <T>(this: T[], i: number, j: number): T[] {
     if (typeof i !== 'number' || typeof j !== 'number' || !Number.isInteger(i) || !Number.isInteger(j)) {
         throw new TypeError('Indices must be integers');
@@ -522,6 +584,9 @@ defineIfNotExists(Array.prototype, 'swap', function <T>(this: T[], i: number, j:
     return this;
 });
 
+/**
+ * @see Array.prototype.shuffle
+ */
 defineIfNotExists(Array.prototype, 'shuffle', function <T>(this: T[]): T[] {
     const arr = this.slice();
     for (let i = arr.length - 1; i > 0; i--) {
@@ -531,6 +596,9 @@ defineIfNotExists(Array.prototype, 'shuffle', function <T>(this: T[]): T[] {
     return arr;
 });
 
+/**
+ * @see Array.prototype.toMap
+ */
 defineIfNotExists(Array.prototype, 'toMap', function <
     T,
     K,
@@ -554,6 +622,9 @@ defineIfNotExists(Array.prototype, 'toMap', function <
     return map;
 });
 
+/**
+ * @see Array.prototype.toObject
+ */
 defineIfNotExists(Array.prototype, 'toObject', function <
     T,
     K extends PropertyKey,
@@ -587,11 +658,17 @@ defineIfNotExists(Array.prototype, 'toObject', function <
     return Object.fromEntries(entries) as Record<K | number, V | T>;
 });
 
+/**
+ * @see Array.prototype.toSet
+ */
 defineIfNotExists(Array.prototype, 'toSet', function <T, K>(this: T[], selector?: Selector<T, K>): Set<T | K> {
     const getValue = resolveSelector(selector, (item: T) => item as K | T);
     return new Set(this.map(getValue));
 });
 
+/**
+ * @see Array.prototype.countBy
+ */
 defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selector?: Selector<T, K>): Map<
     K | T,
     number
@@ -603,4 +680,17 @@ defineIfNotExists(Array.prototype, 'countBy', function <T, K>(this: T[], selecto
         map.set(key, (map.get(key) ?? 0) + 1);
     }
     return map;
+});
+
+/**
+ * @see Array.prototype.slugifyIncludes
+ */
+defineIfNotExists(Array.prototype, 'slugifyIncludes', function (this: string[], value: string): boolean {
+    if (typeof value !== 'string') utilitishError('Array.prototype.slugifyIncludes', 'must be a string', value);
+    const slugified = value.slugify();
+    return this.some((item) => {
+        if (typeof item !== 'string')
+            utilitishError('Array.prototype.slugifyIncludes', 'all array items must be strings', item);
+        return item.slugify() === slugified;
+    });
 });

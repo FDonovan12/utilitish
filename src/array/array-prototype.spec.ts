@@ -482,7 +482,7 @@ describe('Array.prototype', () => {
     });
 
     describe('Array.prototype.toObject', () => {
-        it('converts array of pairs to object', () => {
+        it('should converts array of pairs to object', () => {
             const arr: [string, number][] = [
                 ['a', 1],
                 ['b', 2],
@@ -493,7 +493,7 @@ describe('Array.prototype', () => {
             expect(typeof obj).toBe('object');
         });
 
-        it('converts array of pairs with numeric keys to object', () => {
+        it('should converts array of pairs with numeric keys to object', () => {
             const arr: [number, string][] = [
                 [1, 'a'],
                 [2, 'b'],
@@ -503,7 +503,7 @@ describe('Array.prototype', () => {
             expect(obj).toEqual({ 1: 'a', 2: 'b', 3: 'c' });
         });
 
-        it('converts array of objects to object using key string', () => {
+        it('should converts array of objects to object using key string', () => {
             const arr = [
                 { id: 1, name: 'foo' },
                 { id: 2, name: 'bar' },
@@ -515,7 +515,7 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('converts array of objects to object using key callback', () => {
+        it('should converts array of objects to object using key callback', () => {
             const arr = [
                 { id: 1, name: 'foo' },
                 { id: 2, name: 'bar' },
@@ -527,7 +527,7 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('converts array of objects using key callback and value callback', () => {
+        it('should converts array of objects using key callback and value callback', () => {
             const arr = [
                 { id: 1, name: 'foo' },
                 { id: 2, name: 'bar' },
@@ -542,7 +542,7 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('converts array without selector (uses index as key)', () => {
+        it('should converts array without selector (uses index as key)', () => {
             const arr = ['a', 'b', 'c'];
             const obj = arr.toObject();
             expect(obj).toEqual({
@@ -552,13 +552,13 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('converts empty array to empty object', () => {
+        it('should converts empty array to empty object', () => {
             const arr: any[] = [];
             const obj = arr.toObject();
             expect(obj).toEqual({});
         });
 
-        it('handles objects with string and numeric keys', () => {
+        it('should handles objects with string and numeric keys', () => {
             const arr = [
                 { key: 'name', value: 'Alice' },
                 { key: 'age', value: 30 },
@@ -573,7 +573,7 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('throws error when key selector returns null', () => {
+        it('should throws error when key selector returns null', () => {
             const arr = [{ id: 1, name: 'foo' }];
             expect(() =>
                 arr.toObject(
@@ -583,7 +583,7 @@ describe('Array.prototype', () => {
             ).toThrow(TypeError);
         });
 
-        it('throws error when key selector returns undefined', () => {
+        it('should throws error when key selector returns undefined', () => {
             const arr = [{ id: 1, name: 'foo' }];
             expect(() =>
                 arr.toObject(
@@ -593,12 +593,12 @@ describe('Array.prototype', () => {
             ).toThrow(TypeError);
         });
 
-        it('throws error when key is not a string or number', () => {
+        it('should throws error when key is not a string or number', () => {
             const arr = [{ id: { nested: 1 }, name: 'foo' }];
             expect(() => arr.toObject((x) => x.id as any)).toThrow(TypeError);
         });
 
-        it('overwrites duplicate keys with the last value', () => {
+        it('should overwrites duplicate keys with the last value', () => {
             const arr = [
                 { id: 1, value: 'first' },
                 { id: 1, value: 'second' },
@@ -612,7 +612,7 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('handles mixed types in array', () => {
+        it('should handles mixed types in array', () => {
             const arr = [
                 { id: 'x', value: 10 },
                 { id: 'y', value: 20 },
@@ -627,7 +627,7 @@ describe('Array.prototype', () => {
             });
         });
 
-        it('converts with string key and different value types', () => {
+        it('should converts with string key and different value types', () => {
             const arr = [
                 { id: 1, data: 'text' },
                 { id: 2, data: 42 },

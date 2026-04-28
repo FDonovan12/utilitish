@@ -1,6 +1,5 @@
-import { defineIfNotExists } from '../utils/core.utils';
-import { SlugifyConfig } from '../utils/slugify.config';
-import { slugifyString } from '../utils/slugify.utils';
+import { defineIfNotExists, utilitishError } from '../utils/core.utils';
+import { SlugifyConfig, slugifyString } from '../utils/slugify.config';
 
 declare global {
     interface String {
@@ -210,22 +209,103 @@ declare global {
          * Compares two strings by slugifying both and checking if they are equal.
          * Useful for case-insensitive and accent-insensitive string comparison.
          *
-         * @this {string} The first string to compare
-         * @param {string} other - The second string to compare
-         * @returns {boolean} True if both slugified strings are equal, false otherwise
-         * @throws {TypeError} If the parameter is not a string
+         * @this {string} The first string to compare.
+         * @param {string} other - The second string to compare.
+         * @returns {boolean} `true` if both slugified strings are equal, `false` otherwise.
+         * @throws {TypeError} If `other` is not a string.
          *
          * @example
-         * 'Hello World'.compareSlugify('hello-world'); // true
-         * 'Héllo Wørld'.compareSlugify('hello-world'); // true
-         * 'Hello World'.compareSlugify('goodbye-world'); // false
+         * 'Hello World'.slugifyEquals('hello-world');   // true
+         * 'Héllo World'.slugifyEquals('hello-world');   // true
+         * 'Hello World'.slugifyEquals('goodbye-world'); // false
          *
          * @remarks
-         * - Both strings are slugified using the default or global configuration
-         * - Useful for comparing user-provided strings with stored slugs
-         * - Guard ensures the parameter is a valid string type
+         * - Both strings are slugified before comparison.
+         * - Since `slugify` is idempotent, passing an already-slugified string works as expected.
+         * - Useful for comparing user-provided strings with stored slugs.
          */
-        compareSlugify(other: string): boolean;
+        slugifyEquals(other: string): boolean;
+
+        /**
+         * Checks if the slugified version of this string includes the slugified version of another.
+         * Useful for case-insensitive and accent-insensitive substring search.
+         *
+         * @this {string} The string to search in.
+         * @param {string} other - The string to search for.
+         * @returns {boolean} `true` if the slugified string contains the slugified `other`, `false` otherwise.
+         * @throws {TypeError} If `other` is not a string.
+         *
+         * @example
+         * 'Hello World'.slugifyIncludes('hello');      // true
+         * 'Héllo World'.slugifyIncludes('hello');      // true
+         * 'Hello World'.slugifyIncludes('goodbye');    // false
+         *
+         * @remarks
+         * - Both strings are slugified before comparison.
+         * - Since `slugify` is idempotent, passing an already-slugified string works as expected.
+         */
+        slugifyIncludes(other: string): boolean;
+
+        /**
+         * Checks if the slugified version of this string starts with the slugified version of another.
+         * Useful for case-insensitive and accent-insensitive prefix matching.
+         *
+         * @this {string} The string to check.
+         * @param {string} other - The prefix to check against.
+         * @returns {boolean} `true` if the slugified string starts with the slugified `other`, `false` otherwise.
+         * @throws {TypeError} If `other` is not a string.
+         *
+         * @example
+         * 'Hello World'.slugifyStartsWith('hello');    // true
+         * 'Héllo World'.slugifyStartsWith('hello');    // true
+         * 'Hello World'.slugifyStartsWith('world');    // false
+         *
+         * @remarks
+         * - Both strings are slugified before comparison.
+         * - Since `slugify` is idempotent, passing an already-slugified string works as expected.
+         */
+        slugifyStartsWith(other: string): boolean;
+
+        /**
+         * Checks if the slugified version of this string ends with the slugified version of another.
+         * Useful for case-insensitive and accent-insensitive suffix matching.
+         *
+         * @this {string} The string to check.
+         * @param {string} other - The suffix to check against.
+         * @returns {boolean} `true` if the slugified string ends with the slugified `other`, `false` otherwise.
+         * @throws {TypeError} If `other` is not a string.
+         *
+         * @example
+         * 'Hello World'.slugifyEndsWith('world');      // true
+         * 'Héllo World'.slugifyEndsWith('world');      // true
+         * 'Hello World'.slugifyEndsWith('hello');      // false
+         *
+         * @remarks
+         * - Both strings are slugified before comparison.
+         * - Since `slugify` is idempotent, passing an already-slugified string works as expected.
+         */
+        slugifyEndsWith(other: string): boolean;
+
+        /**
+         * Checks if the slugified version of this string matches any slugified string in a list.
+         * Useful for case-insensitive and accent-insensitive list lookup.
+         *
+         * @this {string} The string to search for.
+         * @param {string[]} list - The array of strings to search in.
+         * @returns {boolean} `true` if any slugified item in the list equals the slugified string, `false` otherwise.
+         * @throws {TypeError} If `list` is not an array.
+         * @throws {TypeError} If `list` contains non-string items.
+         *
+         * @example
+         * 'Hello World'.slugifyIn(['hello-world', 'foo']); // true
+         * 'Héllo World'.slugifyIn(['hello-world', 'foo']); // true
+         * 'Hello World'.slugifyIn(['foo', 'bar']);          // false
+         *
+         * @remarks
+         * - All strings are slugified before comparison.
+         * - Since `slugify` is idempotent, mixing raw and already-slugified strings in the list works as expected.
+         */
+        slugifyIn(list: string[]): boolean;
 
         /**
          * Replaces a substring between `start` and `end` indices with a given string.
@@ -295,9 +375,9 @@ defineIfNotExists(String.prototype, 'snakeCase', function (this: string): string
  * @see String.prototype.truncate
  */
 defineIfNotExists(String.prototype, 'truncate', function (this: string, n: number): string {
-    if (typeof n !== 'number' || !Number.isInteger(n) || n < 0) {
-        throw new TypeError('Truncate length must be a non-negative integer');
-    }
+    if (typeof n !== 'number') utilitishError('String.prototype.truncate', 'n must be a number', n);
+    if (!Number.isInteger(n)) utilitishError('String.prototype.truncate', 'n must be an integer', n);
+    if (n < 0) utilitishError('String.prototype.truncate', 'n must be non-negative', n);
     return this.length > n ? this.slice(0, n) + '...' : this.toString();
 });
 
@@ -331,13 +411,47 @@ defineIfNotExists(String.prototype, 'capitalize', function (this: string): strin
 });
 
 /**
- * @see String.prototype.compareSlugify
+ * @see String.prototype.slugifyEquals
  */
-defineIfNotExists(String.prototype, 'compareSlugify', function (this: string, other: string): boolean {
-    if (typeof other !== 'string') {
-        throw new TypeError('Parameter must be a string');
-    }
+defineIfNotExists(String.prototype, 'slugifyEquals', function (this: string, other: string): boolean {
+    if (typeof other !== 'string') utilitishError('String.prototype.slugifyEquals', 'other must be a string', other);
     return this.slugify() === other.slugify();
+});
+
+/**
+ * @see String.prototype.slugifyIncludes
+ */
+defineIfNotExists(String.prototype, 'slugifyIncludes', function (this: string, other: string): boolean {
+    if (typeof other !== 'string') utilitishError('String.prototype.slugifyIncludes', 'other must be a string', other);
+    return this.slugify().includes(other.slugify());
+});
+
+/**
+ * @see String.prototype.slugifyStartsWith
+ */
+defineIfNotExists(String.prototype, 'slugifyStartsWith', function (this: string, other: string): boolean {
+    if (typeof other !== 'string')
+        utilitishError('String.prototype.slugifyStartsWith', 'other must be a string', other);
+    return this.slugify().startsWith(other.slugify());
+});
+
+/**
+ * @see String.prototype.slugifyEndsWith
+ */
+defineIfNotExists(String.prototype, 'slugifyEndsWith', function (this: string, other: string): boolean {
+    if (typeof other !== 'string') utilitishError('String.prototype.slugifyEndsWith', 'other must be a string', other);
+    return this.slugify().endsWith(other.slugify());
+});
+
+/**
+ * @see String.prototype.slugifyIn
+ */
+defineIfNotExists(String.prototype, 'slugifyIn', function (this: string, list: string[]): boolean {
+    if (!Array.isArray(list)) utilitishError('String.prototype.slugifyIn', 'list must be an array', list);
+    if (!list.every((item) => typeof item === 'string'))
+        utilitishError('String.prototype.slugifyIn', 'list must be an array of strings', list);
+    const slugified = this.slugify();
+    return list.some((item) => item.slugify() === slugified);
 });
 
 /**

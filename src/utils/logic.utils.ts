@@ -5,6 +5,11 @@ export function sortBy<T>(arr: T[], direction: 'asc' | 'desc', selector?: Select
 
     const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
 
+    const sample = getValue(arr[0]);
+    if (!isNumberOrString(sample)) {
+        throw new TypeError('Selector must return number or string');
+    }
+
     if (!selector && !arr.every((item) => isNumberOrString(item))) {
         throw new TypeError('Array elements must be number or string if no selector is provided');
     }
