@@ -1,4 +1,4 @@
-import { defineIfNotExists } from '../utils/core.utils';
+import { defineIfNotExists, utilitishError } from '../utils/core.utils';
 
 declare global {
     interface Set<T> {
@@ -121,7 +121,7 @@ defineIfNotExists(Set.prototype, 'toList', function <T>(this: Set<T>): T[] {
  * @see Set.prototype.hasAny
  */
 defineIfNotExists(Set.prototype, 'hasAny', function <T>(this: Set<T>, ...items: T[]): boolean {
-    if (!Array.isArray(items)) throw new TypeError('Arguments must be an array');
+    if (!Array.isArray(items)) utilitishError('Set.prototype.hasAny', 'arguments must be an array', items);
     if (items.length === 0) return false;
     return items.some((item) => this.has(item));
 });
@@ -138,7 +138,7 @@ defineIfNotExists(Set.prototype, 'includes', function <T>(this: Set<T>, ...args:
     } else {
         values = args;
     }
-    if (!Array.isArray(values)) throw new TypeError('Arguments must be an array or a Set');
+    if (!Array.isArray(values)) utilitishError('Set.prototype.includes', 'arguments must be an array or a Set', args);
     return values.every((item) => this.has(item));
 });
 
@@ -148,7 +148,7 @@ defineIfNotExists(Set.prototype, 'includes', function <T>(this: Set<T>, ...args:
 defineIfNotExists(Set.prototype, 'union', function <T>(this: Set<T>, ...others: Set<T>[]): Set<T> {
     const result = new Set(this);
     for (const other of others) {
-        if (!(other instanceof Set)) throw new TypeError('Arguments must be Sets');
+        if (!(other instanceof Set)) utilitishError('Set.prototype.union', 'arguments must be Sets', other);
         for (const item of other) {
             result.add(item);
         }
@@ -160,7 +160,7 @@ defineIfNotExists(Set.prototype, 'union', function <T>(this: Set<T>, ...others: 
  * @see Set.prototype.intersection
  */
 defineIfNotExists(Set.prototype, 'intersection', function <T>(this: Set<T>, ...others: Set<T>[]): Set<T> {
-    if (others.some((s) => !(s instanceof Set))) throw new TypeError('Arguments must be Sets');
+    if (others.some((s) => !(s instanceof Set))) utilitishError('Set.prototype.intersection', 'arguments must be Sets', others);
     const result = new Set<T>();
     for (const item of this) {
         if (others.every((set) => set.has(item))) {

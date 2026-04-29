@@ -1,4 +1,4 @@
-import { defineIfNotExists } from '../utils/core.utils';
+import { defineIfNotExists, utilitishError } from '../utils/core.utils';
 
 declare global {
     interface Map<K, V> {
@@ -106,21 +106,17 @@ defineIfNotExists(Map.prototype, 'toList', function <
         case 'object': {
             const obj: Record<string, V> = {};
             for (const [key, value] of this) {
-                if (typeof key === 'string' || typeof key === 'number' || typeof key === 'symbol') {
-                    // For number keys, convert to string (object keys are always strings or symbols)
-                    obj[String(key)] = value;
-                } else {
-                    throw new TypeError(
-                        `Map.prototype.toList('object') only supports string, number, or symbol keys. Got: ${typeof key}`,
-                    );
+                if (typeof key !== 'string' && typeof key !== 'number' && typeof key !== 'symbol') {
+                    utilitishError('Map.prototype.toList', `only supports string, number, or symbol keys`, key);
                 }
+                obj[String(key)] = value;
             }
             return obj;
         }
         case 'entries':
             return Array.from(this.entries());
         default:
-            throw new TypeError(`Unknown type "${type}" for Map.prototype.toList`);
+            return utilitishError('Map.prototype.toList', `unknown type`, type);
     }
 });
 
@@ -131,15 +127,12 @@ defineIfNotExists(Map.prototype, 'toObject', function <K extends PropertyKey, V>
     const entries = Array.from(this.entries());
 
     for (const [key] of entries) {
-        if (key === null || key === undefined) {
-            throw new TypeError(`Invalid key: key cannot be null or undefined. Key received: ${String(key)}`);
-        }
+        if (key === null) utilitishError('Map.prototype.toObject', 'key cannot be null');
+        if (key === undefined) utilitishError('Map.prototype.toObject', 'key cannot be undefined');
 
         const keyType = typeof key;
         if (keyType !== 'string' && keyType !== 'number' && keyType !== 'symbol') {
-            throw new TypeError(
-                `Invalid key type: keys must be string, number, or symbol, received ${keyType}. Key value: ${String(key)}`,
-            );
+            utilitishError('Map.prototype.toObject', `keys must be string, number, or symbol`, key);
         }
     }
 
@@ -150,15 +143,15 @@ defineIfNotExists(Map.prototype, 'toObject', function <K extends PropertyKey, V>
  * @see Map.prototype.ensureArray
  */
 defineIfNotExists(Map.prototype, 'ensureArray', function <K, V>(this: Map<K, V[]>, key: K): V[] {
-    if (key === null || key === undefined) {
-        throw new TypeError('Key cannot be null or undefined');
+    if (key === null) utilitishError('Map.prototype.ensureArray', 'key cannot be null');
+    if (key === undefined) utilitishError('Map.prototype.ensureArray', 'key cannot be undefined');
+    let arr = this.get(key);
+    if (arr === undefined) {
+        arr = [];
+        this.set(key, arr);
     }
-    if (!this.has(key)) {
-        this.set(key, []);
-    }
-    const arr = this.get(key);
     if (!Array.isArray(arr)) {
-        throw new TypeError('Value for the key is not an array');
+        utilitishError('Map.prototype.ensureArray', 'value for the key is not an array', arr);
     }
     return arr;
 });

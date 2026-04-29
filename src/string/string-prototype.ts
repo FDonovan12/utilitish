@@ -461,15 +461,14 @@ defineIfNotExists(
     String.prototype,
     'replaceRange',
     function (this: string, start: number, end: number, replaceString: string = ''): string {
-        if (!Number.isInteger(start) || !Number.isInteger(end)) {
-            throw new TypeError('start and end must be integers');
-        }
-        if (start < 0 || end < 0) {
-            throw new RangeError('start or end cannot be negative');
-        }
-        if (start > this.length || end > this.length) {
-            throw new RangeError('start or end is out of bounds');
-        }
+        if (!Number.isInteger(start))
+            utilitishError('String.prototype.replaceRange', 'start must be an integer', start);
+        if (!Number.isInteger(end)) utilitishError('String.prototype.replaceRange', 'end must be an integer', end);
+        if (start < 0) utilitishError('String.prototype.replaceRange', 'start cannot be negative', start, RangeError);
+        if (end < 0) utilitishError('String.prototype.replaceRange', 'end cannot be negative', end, RangeError);
+        if (start > this.length)
+            utilitishError('String.prototype.replaceRange', 'start is out of bounds', start, RangeError);
+        if (end > this.length) utilitishError('String.prototype.replaceRange', 'end is out of bounds', end, RangeError);
         if (start > end) [start, end] = [end, start];
         return this.slice(0, start) + (replaceString ?? '') + this.slice(end);
     },

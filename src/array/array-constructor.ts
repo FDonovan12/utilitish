@@ -1,4 +1,5 @@
 import { defineStaticIfNotExists } from '../utils/core.utils';
+import { utilitishError } from './../utils/core.utils';
 
 declare global {
     interface ArrayConstructor {
@@ -120,7 +121,7 @@ defineStaticIfNotExists(Array, 'range', function (start: number, end?: number, s
         end = start;
         start = 0;
     }
-    if (step === 0) throw new Error('step must not be 0');
+    if (step === 0) utilitishError('Array.range', 'step must not be 0', undefined, RangeError);
     const result: number[] = [];
     const condition = step > 0 ? (i: number) => i < end! : (i: number) => i > end!;
     for (let i = start; condition(i); i += step) {
@@ -133,9 +134,9 @@ defineStaticIfNotExists(Array, 'range', function (start: number, end?: number, s
  * @see Array.repeat
  */
 defineStaticIfNotExists(Array, 'repeat', function <T>(length: number, value: T | (() => T)): T[] {
-    if (typeof length !== 'number' || !Number.isInteger(length) || length < 0) {
-        throw new TypeError('Length must be a non-negative integer');
-    }
+    if (typeof length !== 'number') utilitishError('Array.repeat', 'n must be a number', length);
+    if (!Number.isInteger(length)) utilitishError('Array.repeat', 'n must be an integer', length);
+    if (length < 0) utilitishError('Array.repeat', 'n must be non-negative', length, RangeError);
     return Array.from({ length }, () => (typeof value === 'function' ? (value as () => T)() : value));
 });
 

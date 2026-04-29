@@ -1,4 +1,4 @@
-import { defineIfNotExists } from '../utils/core.utils';
+import { defineIfNotExists, utilitishError } from '../utils/core.utils';
 
 declare global {
     interface Object {
@@ -128,9 +128,8 @@ defineIfNotExists(Object.prototype, 'deepClone', function (this: any) {
  * @see Object.prototype.deepMerge
  */
 defineIfNotExists(Object.prototype, 'deepMerge', function (this: object, source: any) {
-    if (typeof source !== 'object' || source === null) {
-        throw new TypeError('Source must be a non-null object');
-    }
+    if (typeof source !== 'object') utilitishError('Object.prototype.deepMerge', 'source must be an object', source);
+    if (source === null) utilitishError('Object.prototype.deepMerge', 'source cannot be null', source);
     const isObject = (val: unknown): val is Record<string, any> =>
         val !== null && typeof val === 'object' && !Array.isArray(val);
 

@@ -164,6 +164,7 @@ export function isNumberOrString(value: unknown): value is string | number {
 export type Selector<T, K> = keyof T | ((item: T) => K);
 
 export const utilitishError = (method: string, message: string, received?: unknown, ErrorClass = TypeError): never => {
-    const receivedInfo = received !== undefined ? `, received ${typeof received}` : '';
+    const receivedInfo =
+        received !== undefined ? `, received ${ErrorClass === RangeError ? received : typeof received}` : '';
     throw new ErrorClass(`[Utilitish] ${method}: ${message}${receivedInfo}`);
 };

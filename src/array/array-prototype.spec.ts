@@ -114,8 +114,8 @@ describe('Array.prototype', () => {
         describe('error handling', () => {
             it('should throw TypeError when size is not a positive integer', () => {
                 const arr = [1, 2, 3];
-                expect(() => arr.chunk(0)).toThrow(TypeError);
-                expect(() => arr.chunk(-1)).toThrow(TypeError);
+                expect(() => arr.chunk(0)).toThrow(RangeError);
+                expect(() => arr.chunk(-1)).toThrow(RangeError);
                 expect(() => arr.chunk(1.5)).toThrow(TypeError);
                 expect(() => arr.chunk('a' as any)).toThrow(TypeError);
             });

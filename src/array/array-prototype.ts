@@ -453,10 +453,10 @@ defineIfNotExists(Array.prototype, 'last', function <T>(this: T[]): T | undefine
 defineIfNotExists(Array.prototype, 'sum', function <T>(this: T[], selector?: Selector<T, number>): number {
     if (this.length === 0) return 0;
     const getValue = resolveSelector(selector, (item: T) => item as number);
-    if (this.every((item) => typeof getValue(item) === 'number')) {
-        return this.reduce((acc: number, item: T) => getValue(item) + acc, 0);
+    if (!this.every((item) => typeof getValue(item) === 'number')) {
+        utilitishError('Array.prototype.sum', 'requires a selector that returns a number unless array is number[]');
     }
-    throw new TypeError('Array.prototype.sum() requires a selector who return a number unless array is number[]');
+    return this.reduce((acc: number, item: T) => getValue(item) + acc, 0);
 });
 
 /**
@@ -470,9 +470,9 @@ defineIfNotExists(Array.prototype, 'unique', function <T>(this: T[]): T[] {
  * @see Array.prototype.chunk
  */
 defineIfNotExists(Array.prototype, 'chunk', function <T>(this: T[], size: number): T[][] {
-    if (typeof size !== 'number' || !Number.isInteger(size) || size <= 0) {
-        throw new TypeError('Chunk size must be a positive integer');
-    }
+    if (typeof size !== 'number') utilitishError('Array.prototype.chunk', 'size must be a number', size);
+    if (!Number.isInteger(size)) utilitishError('Array.prototype.chunk', 'size must be an integer', size);
+    if (size <= 0) utilitishError('Array.prototype.chunk', 'size must be positive', size, RangeError);
     const result: T[][] = [];
     for (let i = 0; i < this.length; i += size) {
         result.push(this.slice(i, i + size));
@@ -486,10 +486,10 @@ defineIfNotExists(Array.prototype, 'chunk', function <T>(this: T[], size: number
 defineIfNotExists(Array.prototype, 'average', function <T>(this: T[], selector?: Selector<T, number>): number {
     if (this.length === 0) return 0;
     const getValue = resolveSelector(selector, (item: T) => item as number);
-    if (this.every((item) => typeof getValue(item) === 'number')) {
-        return this.reduce((acc: number, item: T) => getValue(item) + acc, 0) / this.length;
+    if (!this.every((item) => typeof getValue(item) === 'number')) {
+        utilitishError('Array.prototype.average', 'requires a selector that returns a number unless array is number[]');
     }
-    throw new TypeError('Array.prototype.average() requires a selector who return a number unless array is number[]');
+    return this.reduce((acc: number, item: T) => getValue(item) + acc, 0) / this.length;
 });
 
 /**
@@ -535,7 +535,7 @@ defineIfNotExists(Array.prototype, 'sortBy', function <
     const getValue = resolveSelector(selector, (item: T) => item as number | string | T);
 
     if (!selector && !this.every((item) => isNumberOrString(item))) {
-        throw new TypeError('Array elements must be number or string if no selector is provided');
+        utilitishError('Array.prototype.sortBy', 'array elements must be number or string if no selector is provided');
     }
 
     return this.slice().sort((a, b) => {
@@ -543,7 +543,7 @@ defineIfNotExists(Array.prototype, 'sortBy', function <
         const valB = getValue(b);
 
         if (!isNumberOrString(valA) || !isNumberOrString(valB)) {
-            throw new TypeError('Selector must return number or string');
+            utilitishError('Array.prototype.sortBy', 'selector must return number or string');
         }
 
         if (valA > valB) return direction === 'asc' ? 1 : -1;
@@ -570,12 +570,12 @@ defineIfNotExists(Array.prototype, 'sortDesc', function <T>(this: T[], selector?
  * @see Array.prototype.swap
  */
 defineIfNotExists(Array.prototype, 'swap', function <T>(this: T[], i: number, j: number): T[] {
-    if (typeof i !== 'number' || typeof j !== 'number' || !Number.isInteger(i) || !Number.isInteger(j)) {
-        throw new TypeError('Indices must be integers');
-    }
-    if (i < 0 || i >= this.length || j < 0 || j >= this.length) {
-        throw new RangeError('Index out of bounds');
-    }
+    if (typeof i !== 'number') utilitishError('Array.prototype.swap', 'i must be a number', i);
+    if (typeof j !== 'number') utilitishError('Array.prototype.swap', 'j must be a number', j);
+    if (!Number.isInteger(i)) utilitishError('Array.prototype.swap', 'i must be an integer', i);
+    if (!Number.isInteger(j)) utilitishError('Array.prototype.swap', 'j must be an integer', j);
+    if (i < 0 || i >= this.length) utilitishError('Array.prototype.swap', 'i is out of bounds', i, RangeError);
+    if (j < 0 || j >= this.length) utilitishError('Array.prototype.swap', 'j is out of bounds', j, RangeError);
     if (i !== j) {
         const temp = this[i];
         this[i] = this[j];
