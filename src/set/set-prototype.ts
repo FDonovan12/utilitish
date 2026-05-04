@@ -17,7 +17,7 @@ declare global {
          * - Returns a new array instance each time; modifying it does not affect the Set
          * - Empty sets return an empty array
          */
-        toList<T>(): T[];
+        toList(): T[];
 
         /**
          * Returns true if at least one of the given items is present in the Set.
@@ -160,7 +160,8 @@ defineIfNotExists(Set.prototype, 'union', function <T>(this: Set<T>, ...others: 
  * @see Set.prototype.intersection
  */
 defineIfNotExists(Set.prototype, 'intersection', function <T>(this: Set<T>, ...others: Set<T>[]): Set<T> {
-    if (others.some((s) => !(s instanceof Set))) utilitishError('Set.prototype.intersection', 'arguments must be Sets', others);
+    if (others.some((s) => !(s instanceof Set)))
+        utilitishError('Set.prototype.intersection', 'arguments must be Sets', others);
     const result = new Set<T>();
     for (const item of this) {
         if (others.every((set) => set.has(item))) {
