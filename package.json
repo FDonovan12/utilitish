@@ -19,7 +19,7 @@
     "build": "tsc",
     "test": "jest",
     "docs": "typedoc",
-    "release": "npm test && npm run build && npm version patch && git push --follow-tags && npm publish"
+    "release": "(npm whoami || npm login) && npm test && npm run build && npm version patch && git push --follow-tags && npm publish"
   },
   "keywords": [
     "typescript",

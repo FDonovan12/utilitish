@@ -432,6 +432,52 @@ declare global {
          * - Throws on the first non-string item encountered in the array.
          */
         slugifyIncludes(value: string): boolean;
+
+        /**
+         * Groups array elements into multiple groups based on an array of keys returned by the selector.
+         * Unlike `groupBy`, a single element can appear in multiple groups.
+         *
+         * @this {T[]} The array to group.
+         * @param {(item: T) => K[]} selector - A function returning an array of keys for each element.
+         * @returns {Map<K, T[]>} A Map where each key maps to an array of matching elements.
+         * @throws {TypeError} If selector is not a function or a string key.
+         *
+         * @example
+         * const posts = [
+         *   { title: 'A', tags: ['js', 'ts'] },
+         *   { title: 'B', tags: ['ts', 'node'] },
+         * ];
+         * posts.groupByMany(post => post.tags);
+         * // Map { 'js' => [{ title: 'A', ... }], 'ts' => [{ title: 'A', ... }, { title: 'B', ... }], 'node' => [{ title: 'B', ... }] }
+         *
+         * @remarks
+         * - Elements with an empty key array are ignored.
+         * - Order of elements within each group follows the original array order.
+         */
+        groupByMany<K>(this: T[], selector: Selector<T, K[]>): Map<K, T[]>;
+
+        /**
+         * Classifies array elements into named groups based on predicate functions.
+         * Each element is tested against all predicates and can appear in multiple groups.
+         *
+         * @this {T[]} The array to classify.
+         * @param {Record<K, (item: T) => boolean>} predicates - An object mapping group names to predicate functions.
+         * @returns {Map<K, T[]>} A Map where each key maps to elements matching the predicate.
+         * @throws {TypeError} If predicates is not a valid object.
+         *
+         * @example
+         * users.classify({
+         *   adult:   u => u.age >= 18,
+         *   admin:   u => u.roles.includes('ADMIN'),
+         *   premium: u => u.premium,
+         * });
+         *
+         * @remarks
+         * - Elements matching no predicate are ignored.
+         * - Elements can appear in multiple groups.
+         * - The return type infers K as a union of the literal keys of the predicates object.
+         */
+        classify<K extends string>(this: T[], predicates: Record<K, Selector<T, Boolean>>): Map<K, T[]>;
     }
 }
 
@@ -695,4 +741,47 @@ defineIfNotExists(Array.prototype, 'slugifyIncludes', function (this: string[], 
             utilitishError('Array.prototype.slugifyIncludes', 'all array items must be strings', item);
         return item.slugify() === slugified;
     });
+});
+
+/**
+ * @see Array.prototype.groupByMany
+ */
+defineIfNotExists(Array.prototype, 'groupByMany', function <T, K>(this: T[], selector: Selector<T, K[]>): Map<K, T[]> {
+    const getKeys = resolveSelector<T, K[]>(selector);
+    const result = new Map<K, T[]>();
+
+    for (const item of this) {
+        const keys = getKeys(item);
+        for (const key of keys) {
+            if (!result.has(key)) result.set(key, []);
+            result.get(key)!.push(item);
+        }
+    }
+    return result;
+});
+
+/**
+ * @see Array.prototype.classify
+ */
+defineIfNotExists(Array.prototype, 'classify', function <
+    T,
+    K extends string,
+>(this: T[], predicates: Record<K, (item: T) => boolean>): Map<K, T[]> {
+    if (typeof predicates !== 'object' || predicates === null)
+        utilitishError('Array.prototype.classify', 'predicates must be a non-null object', predicates);
+
+    const resolvedPredicates = Object.fromEntries(
+        Object.entries(predicates).map(([key, fn]) => [key, resolveSelector<T, boolean>(fn as (item: T) => boolean)]),
+    );
+
+    const entries = Object.entries(resolvedPredicates) as [K, (item: T) => boolean][];
+    const result = new Map<K, T[]>(entries.map(([key]) => [key, []]));
+
+    for (const item of this) {
+        for (const [key, predicate] of entries) {
+            if (!!predicate(item)) result.get(key)!.push(item);
+        }
+    }
+
+    return result;
 });

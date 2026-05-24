@@ -104,7 +104,10 @@ export function resolveSelector<T, R>(
     }
 
     if (typeof selector === 'string') {
-        return (item: T) => item[selector] as unknown as R;
+        return (item: T) => {
+            if (!(selector in (item as any))) throw new TypeError(`selector string must be a key of the item`);
+            return item[selector] as unknown as R;
+        };
     }
 
     if (selector) {

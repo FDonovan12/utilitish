@@ -641,4 +641,114 @@ describe('Array.prototype', () => {
             });
         });
     });
+    describe('Array.prototype.groupByMany', () => {
+        describe('with selector function', () => {
+            it('should group elements by multiple keys', () => {
+                const posts = [
+                    { title: 'A', tags: ['js', 'ts'] },
+                    { title: 'B', tags: ['ts', 'node'] },
+                ];
+                const result = posts.groupByMany((p) => p.tags);
+                expect(result.get('js')).toEqual([{ title: 'A', tags: ['js', 'ts'] }]);
+                expect(result.get('ts')).toHaveLength(2);
+                expect(result.get('node')).toEqual([{ title: 'B', tags: ['ts', 'node'] }]);
+            });
+
+            it('should ignore elements with empty key array', () => {
+                const posts = [
+                    { title: 'A', tags: [] },
+                    { title: 'B', tags: ['ts'] },
+                ];
+                const result = posts.groupByMany((p) => p.tags);
+                expect(result.has('ts')).toBe(true);
+                expect(result.size).toBe(1);
+            });
+
+            it('should return empty Map for empty array', () => {
+                expect([].groupByMany((x: any) => x.tags)).toEqual(new Map());
+            });
+        });
+
+        describe('error handling', () => {
+            it('should throw TypeError when selector is invalid', () => {
+                expect(() => [{ tags: ['a'] }].groupByMany(123 as any)).toThrow(TypeError);
+            });
+        });
+    });
+
+    describe('Array.prototype.classify', () => {
+        describe('with predicate object', () => {
+            it('should classify elements into named groups', () => {
+                const users = [
+                    { name: 'Alice', age: 25, admin: true, premium: false },
+                    { name: 'Bob', age: 16, admin: false, premium: true },
+                    { name: 'Carol', age: 30, admin: true, premium: true },
+                ];
+                const result = users.classify({
+                    adult: (u) => u.age >= 18,
+                    admin: (u) => u.admin,
+                    premium: (u) => u.premium,
+                });
+                expect(result.get('adult')).toHaveLength(2);
+                expect(result.get('admin')).toHaveLength(2);
+                expect(result.get('premium')).toHaveLength(2);
+            });
+
+            it('should allow an element to appear in multiple groups', () => {
+                const users = [{ name: 'Alice', age: 25, admin: true, premium: true }];
+                const result = users.classify({
+                    adult: (u) => u.age >= 18,
+                    admin: (u) => u.admin,
+                });
+                expect(result.get('adult')).toHaveLength(1);
+                expect(result.get('admin')).toHaveLength(1);
+            });
+
+            it('should ignore elements matching no predicate', () => {
+                const users = [{ name: 'Bob', age: 16, admin: false, premium: false }];
+                const result = users.classify({
+                    adult: (u) => u.age >= 18,
+                    admin: (u) => u.admin,
+                });
+                expect(result.get('adult')).toHaveLength(0);
+                expect(result.get('admin')).toHaveLength(0);
+            });
+
+            it('should return Map with empty arrays for empty input', () => {
+                const result = [].classify({ adult: (u: any) => u.age >= 18 });
+                expect(result.get('adult')).toEqual([]);
+            });
+
+            it('should work with key', () => {
+                const users = [
+                    { name: 'Alice', age: 0, admin: false, premium: false },
+                    { name: 'Bob', age: 16, admin: false, premium: false },
+                    { name: 'Chloe', age: 24, admin: true, premium: false },
+                ];
+                const result = users.classify({
+                    admin: 'admin',
+                    age: 'age',
+                });
+                expect(result.get('admin')).toHaveLength(1);
+                expect(result.get('age')).toHaveLength(2);
+            });
+        });
+
+        describe('error handling', () => {
+            it('should throw Error when key selector is invalid', () => {
+                expect(() => [{ id: 1 }].classify(123 as any)).toThrow(Error);
+            });
+            it('should throw TypeError when predicates is not an object', () => {
+                expect(() => [].classify('invalid' as any)).toThrow(TypeError);
+            });
+
+            it('should throw TypeError when predicates is null', () => {
+                expect(() => [].classify(null as any)).toThrow(TypeError);
+            });
+
+            it('should throw TypeError when a predicate is not a function', () => {
+                expect(() => [{ age: 25 }].classify({ adult: 'not an attribut' as any })).toThrow(TypeError);
+            });
+        });
+    });
 });

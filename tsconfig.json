@@ -3,6 +3,7 @@
     "target": "ES2020",
     "moduleResolution": "nodenext",
     "module": "nodenext",
+    "isolatedModules": true,
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
