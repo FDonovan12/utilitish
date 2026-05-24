@@ -348,11 +348,13 @@ declare global {
          * - Symbols are not supported in plain objects
          */
         toObject<K extends PropertyKey, V>(this: [K, V][]): Record<K, V>;
+        toObject<K extends PropertyKey, V>(this: T[]): Record<number, T>;
+        toObject<K extends PropertyKey, V>(this: T[], keySelector: Selector<T, K>): Record<K, T>;
         toObject<K extends PropertyKey, V>(
             this: T[],
-            keySelector?: Selector<T, K>,
-            valueSelector?: Selector<T, V>,
-        ): Record<K | number, V | T>;
+            keySelector: Selector<T, K>,
+            valueSelector: Selector<T, V>,
+        ): Record<K, V>;
 
         /**
          * Returns a Set containing the unique elements of the array.
