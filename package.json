@@ -10,7 +10,7 @@
     "provenance": false
   },
   "description": "",
-  "moduleResolution": "Node16",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
