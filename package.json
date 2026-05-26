@@ -10,8 +10,15 @@
     "provenance": false
   },
   "description": "",
+  "moduleResolution": "Node16",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
