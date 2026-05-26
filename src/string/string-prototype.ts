@@ -95,6 +95,42 @@ declare global {
         snakeCase(): string;
 
         /**
+         * Converts this string to sentence case by splitting into words and joining them in lowercase.
+         *
+         * @this {string} The string to convert.
+         * @returns {string} The string with all words lowercased and joined by spaces.
+         *
+         * @example
+         * 'helloWorld'.sentenceCase();    // 'hello world'
+         * 'Hello-World'.sentenceCase();   // 'hello world'
+         * 'hello_world'.sentenceCase();   // 'hello world'
+         * 'HELLO WORLD'.sentenceCase();   // 'hello world'
+         *
+         * @remarks
+         * - Uses `splitWords` internally to handle camelCase, kebab-case, snake_case, and spaces.
+         * - All words are lowercased before joining.
+         */
+        sentenceCase(): string;
+
+        /**
+         * Converts this string to title case by capitalizing the first letter of each word.
+         *
+         * @this {string} The string to convert.
+         * @returns {string} The string with each word capitalized and joined by spaces.
+         *
+         * @example
+         * 'helloWorld'.titleCase();    // 'Hello World'
+         * 'hello-world'.titleCase();   // 'Hello World'
+         * 'hello_world'.titleCase();   // 'Hello World'
+         * 'HELLO WORLD'.titleCase();   // 'Hello World'
+         *
+         * @remarks
+         * - Uses `splitWords` internally to handle camelCase, kebab-case, snake_case, and spaces.
+         * - Each word is lowercased then capitalized.
+         */
+        titleCase(): string;
+
+        /**
          * Truncates the string to a maximum number of characters, appending '...' if truncated.
          *
          * @this {string} The string to truncate
@@ -337,7 +373,7 @@ declare global {
 defineIfNotExists(String.prototype, 'splitWords', function (this: string): string[] {
     return this.replace(/([a-z0-9])([A-Z])/g, '$1 $2') // helloWorld → hello World
         .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // HTMLParser → HTML Parser
-        .replace(/[^a-zA-Z0-9]+/g, ' ')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
         .trim()
         .split(/\s+/)
         .filter(Boolean);
@@ -369,6 +405,24 @@ defineIfNotExists(String.prototype, 'snakeCase', function (this: string): string
     return this.splitWords()
         .map((w: string) => w.toLowerCase())
         .join('_');
+});
+
+/**
+ * @see String.prototype.sentenceCase
+ */
+defineIfNotExists(String.prototype, 'sentenceCase', function (this: string): string {
+    return this.splitWords()
+        .map((w: string) => w.toLowerCase())
+        .join(' ');
+});
+
+/**
+ * @see String.prototype.titleCase
+ */
+defineIfNotExists(String.prototype, 'titleCase', function (this: string): string {
+    return this.splitWords()
+        .map((w: string) => w.toLowerCase().capitalize())
+        .join(' ');
 });
 
 /**

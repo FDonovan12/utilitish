@@ -18,6 +18,13 @@ describe('String.prototype', () => {
             expect('hello world'.splitWords()).toEqual(['hello', 'world']);
             expect('HTMLParser'.splitWords()).toEqual(['HTML', 'Parser']);
         });
+        it('should split with accent', () => {
+            expect('attaqueChargé'.splitWords()).toEqual(['attaque', 'Chargé']);
+            expect('attaque-chargé'.splitWords()).toEqual(['attaque', 'chargé']);
+            expect('attaque_chargé'.splitWords()).toEqual(['attaque', 'chargé']);
+            expect('attaque chargé'.splitWords()).toEqual(['attaque', 'chargé']);
+            expect('ATTAQUEChargé'.splitWords()).toEqual(['ATTAQUE', 'Chargé']);
+        });
     });
 
     describe('camelCase()', () => {
@@ -41,6 +48,26 @@ describe('String.prototype', () => {
             expect('hello world'.snakeCase()).toBe('hello_world');
             expect('Hello-worldTest'.snakeCase()).toBe('hello_world_test');
             expect('hello_world_test'.snakeCase()).toBe('hello_world_test');
+        });
+    });
+
+    describe('sentenceCase()', () => {
+        it('should convert to sentence case', () => {
+            expect('helloWorld'.sentenceCase()).toBe('hello world');
+            expect('hello-world'.sentenceCase()).toBe('hello world');
+            expect('hello_world'.sentenceCase()).toBe('hello world');
+            expect('HELLO WORLD'.sentenceCase()).toBe('hello world');
+            expect('attaqueChargé'.sentenceCase()).toBe('attaque chargé');
+        });
+    });
+
+    describe('titleCase()', () => {
+        it('should convert to title case', () => {
+            expect('helloWorld'.titleCase()).toBe('Hello World');
+            expect('hello-world'.titleCase()).toBe('Hello World');
+            expect('hello_world'.titleCase()).toBe('Hello World');
+            expect('HELLO WORLD'.titleCase()).toBe('Hello World');
+            expect('attaqueChargé'.titleCase()).toBe('Attaque Chargé');
         });
     });
 
