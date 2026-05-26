@@ -13,6 +13,7 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": true,
   "exports": {
     ".": {
       "import": "./dist/index.js",
