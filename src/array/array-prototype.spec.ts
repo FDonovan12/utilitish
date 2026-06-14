@@ -155,6 +155,22 @@ describe('Array.prototype', () => {
         it('should remove all falsy values', () => {
             expect([0, 1, false, 2, '', 3, null].compact()).toEqual([1, 2, 3]);
         });
+        it('should return correct type when array contains null/undefined', () => {
+            const input: (string | null | undefined)[] = ['a', null, 'b', undefined, 'c'];
+            const result = input.compact();
+            expect(result).toEqual(['a', 'b', 'c']);
+            const _check: string[] = result;
+        });
+
+        it('should return empty array if all values are falsy', () => {
+            expect([null, undefined, false, 0, ''].compact()).toEqual([]);
+        });
+
+        it('should not modify the original array', () => {
+            const input = [1, null, 2];
+            input.compact();
+            expect(input).toEqual([1, null, 2]);
+        });
     });
 
     describe('enumerate()', () => {

@@ -156,7 +156,7 @@ declare global {
          * - Uses JavaScript's falsy value definition
          * - Returns a new array (original is not modified)
          */
-        compact(): T[];
+        compact(): NonNullable<T>[];
 
         /**
          * Enumerates the array into tuples of [value, index].
