@@ -81,11 +81,18 @@ describe('Set.prototype', () => {
                 const b = new Set([2, 3]);
                 expect(a.union(b)).toEqual(new Set([1, 2, 3]));
             });
+            it('should work with multiple inputs', () => {
+                const a = new Set([1, 2]);
+                const b = new Set([2, 3]);
+                const c = new Set([2, 4]);
+                expect(a.union(b, c)).toEqual(new Set([1, 2, 3, 4]));
+            });
         });
 
         describe('with no arguments', () => {
             it('should return a copy of the Set when no arguments provided', () => {
                 const a = new Set([1, 2]);
+                // @ts-nocheck
                 expect(a.union()).toEqual(new Set([1, 2]));
             });
         });

@@ -7,4 +7,4 @@ import './set/set-prototype';
 import './string/string-prototype';
 
 // Export slugify configuration functions
-export { getSlugifyConfig, resetSlugifyConfig, setSlugifyConfig, type SlugifyConfig } from './utils/slugify.config';
+export { getSlugifyConfig, resetSlugifyConfig, setSlugifyConfig, SlugifyConfig } from './utils/slugify.config';
