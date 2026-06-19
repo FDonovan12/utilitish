@@ -1,5 +1,5 @@
-import '../string/string-prototype';
-import { resetSlugifyConfig, setSlugifyConfig, SlugifyConfig } from '../utils/slugify.config';
+import '../string/string-prototype.js';
+import { resetSlugifyConfig, setSlugifyConfig, SlugifyConfig } from '../utils/slugify.config.js';
 
 describe('String.prototype', () => {
     describe('capitalize()', () => {

@@ -1,4 +1,4 @@
-import { Selector, isNumberOrString, resolveSelector } from './core.utils';
+import { Selector, isNumberOrString, resolveSelector } from './core.utils.js';
 
 export function sortBy<T>(arr: T[], direction: 'asc' | 'desc', selector?: Selector<T, number | string>): T[] {
     if (arr.length === 0) return arr.slice();

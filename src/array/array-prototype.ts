@@ -1,5 +1,5 @@
-import { defineIfNotExists, isNumberOrString, resolveSelector, Selector, utilitishError } from '../utils/core.utils';
-import { sortBy } from '../utils/logic.utils';
+import { defineIfNotExists, isNumberOrString, resolveSelector, Selector, utilitishError } from '../utils/core.utils.js';
+import { sortBy } from '../utils/logic.utils.js';
 
 declare global {
     interface Array<T> {

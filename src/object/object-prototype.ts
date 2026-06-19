@@ -1,4 +1,4 @@
-import { defineIfNotExists, utilitishError } from '../utils/core.utils';
+import { defineIfNotExists, utilitishError } from '../utils/core.utils.js';
 
 declare global {
     interface Object {

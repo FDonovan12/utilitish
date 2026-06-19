@@ -1,4 +1,4 @@
-import { sortBy } from './logic.utils';
+import { sortBy } from './logic.utils.js';
 
 describe('logic.utils', () => {
     describe('sortBy()', () => {

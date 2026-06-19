@@ -1,10 +1,10 @@
-import './array/array-constructor';
-import './array/array-prototype';
+import './array/array-constructor.js';
+import './array/array-prototype.js';
 
-import './map/map-prototype';
-import './object/object-prototype';
-import './set/set-prototype';
-import './string/string-prototype';
+import './map/map-prototype.js';
+import './object/object-prototype.js';
+import './set/set-prototype.js';
+import './string/string-prototype.js';
 
 // Export slugify configuration functions
-export { getSlugifyConfig, resetSlugifyConfig, setSlugifyConfig, SlugifyConfig } from './utils/slugify.config';
+export { getSlugifyConfig, resetSlugifyConfig, setSlugifyConfig, SlugifyConfig } from './utils/slugify.config.js';

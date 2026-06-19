@@ -1,5 +1,5 @@
-import { defineStaticIfNotExists } from '../utils/core.utils';
-import { utilitishError } from './../utils/core.utils';
+import { defineStaticIfNotExists } from '../utils/core.utils.js';
+import { utilitishError } from './../utils/core.utils.js';
 
 declare global {
     interface ArrayConstructor {

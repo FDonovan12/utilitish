@@ -1,5 +1,5 @@
-import { defineIfNotExists, utilitishError } from '../utils/core.utils';
-import { SlugifyConfig, slugifyString } from '../utils/slugify.config';
+import { defineIfNotExists, utilitishError } from '../utils/core.utils.js';
+import { SlugifyConfig, slugifyString } from '../utils/slugify.config.js';
 
 declare global {
     interface String {
