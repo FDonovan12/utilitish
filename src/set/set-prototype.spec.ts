@@ -1,4 +1,4 @@
-import '../set/set-prototype';
+import '../set/set-prototype.js';
 
 describe('Set.prototype', () => {
     describe('toList()', () => {

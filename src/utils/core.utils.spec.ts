@@ -5,7 +5,7 @@ import {
     isNumberOrString,
     resolveSelector,
     utilitishError,
-} from './core.utils';
+} from './core.utils.js';
 
 describe('core.utils', () => {
     describe('defineIfNotExists()', () => {

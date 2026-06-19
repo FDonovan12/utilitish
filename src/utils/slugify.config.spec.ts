@@ -6,7 +6,7 @@ import {
     getSlugifyConfig,
     resetSlugifyConfig,
     setSlugifyConfig,
-} from './slugify.config';
+} from './slugify.config.js';
 
 describe('slugify.config', () => {
     afterEach(() => {
